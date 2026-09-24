@@ -1,0 +1,7 @@
+# Default payload encoder (Methodology §5.1). Cased, pre-trained with a large code fraction.
+encoder:
+  hf_id: answerdotai/ModernBERT-base
+  hidden_dim: 768
+  attn_implementation: sdpa
+  lora:
+    target_regex: '.*\.attn\.Wqkv$'          # fused Q/K/V; add |Wo via '.*\.attn\.(Wqkv|Wo)$'

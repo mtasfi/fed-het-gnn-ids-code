@@ -1,0 +1,12 @@
+# A8: Why is graph message passing needed after payload encoding?
+id: A8
+variant: no_graph_mlp
+tier: core
+pipeline: fed_mlp
+seeds:
+- 0
+question: Why is graph message passing needed after payload encoding?
+done: Cached embeddings reused, deterministic input construction, no graph code executes.
+overrides:
+  payload:
+    encoder_source: lora

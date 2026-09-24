@@ -1,0 +1,59 @@
+# CIC-IDS2017 fallback (E0 fork). Payloads from the raw PCAPs; labels from the
+# CICFlowMeter CSVs (MachineLearningCVE / TrafficLabelling). Timestamps in the
+# CSVs are local time (UTC-3 in the published files) with minute resolution,
+# so matching needs a larger tolerance and an explicit timezone.
+dataset:
+  name: cicids2017
+
+  source:
+    kind: local
+    root: data/raw/cicids2017
+    slug: null
+    urls: []
+    cache_dir: data/raw/cicids2017
+    pcap_globs: ["**/*.pcap", "**/*.pcapng"]
+    label_globs: ["**/*.pcap_ISCX.csv", "**/TrafficLabelling/*.csv"]
+
+  label_source:
+    kind: cicids2017
+    columns:
+      ts: Timestamp
+      src_ip: Source IP
+      src_port: Source Port
+      dst_ip: Destination IP
+      dst_port: Destination Port
+      proto: Protocol
+      duration: Flow Duration
+      label: Label
+    ts_format: dayfirst
+    timezone: America/Halifax   # verify in E0 with `run_e0.py offset`
+    duration_unit: us
+
+  label_map:
+    BENIGN: normal
+    DoS Hulk: dos
+    DoS GoldenEye: dos
+    DoS slowloris: dos
+    DoS Slowhttptest: dos
+    DDoS: ddos
+    PortScan: scanning
+    FTP-Patator: password
+    SSH-Patator: password
+    Bot: botnet
+    Infiltration: infiltration
+    Heartbleed: heartbleed
+    "Web Attack \x96 Brute Force": web_bruteforce
+    "Web Attack \x96 XSS": xss
+    "Web Attack \x96 Sql Injection": injection
+    "Web Attack – Brute Force": web_bruteforce
+    "Web Attack – XSS": xss
+    "Web Attack – Sql Injection": injection
+  exclude_classes: []
+  # E7 rule: CIC has only ~21 SQL-injection flows. If support is too small,
+  # predefine a merged class before splitting, e.g. {injection: web_attack, xss: web_attack}.
+  merge_classes: {}
+
+  payload_dependent_classes: [injection, xss, web_bruteforce, password]
+
+matching:
+  time_tolerance_s: 120.0

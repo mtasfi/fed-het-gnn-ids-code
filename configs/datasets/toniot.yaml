@@ -1,0 +1,58 @@
+# Original ToN-IoT network data (UNSW Canberra), NOT NF-ToN-IoT(-v2):
+# the NetFlow CSVs carry no payload bytes and no absolute flow-start time.
+#
+# Payloads and flow statistics come from the raw PCAPs (our extractor);
+# labels come from the processed Zeek-based Network_dataset_*.csv files,
+# matched on canonical 5-tuple + start time (E0.3).
+dataset:
+  name: toniot
+
+  # Where the files live. Swap `kind` to move between Kaggle / local / download
+  # without touching code (fhf/data/sources.py):
+  #   local      root is a directory on disk
+  #   kaggle     root is /kaggle/input/<slug> (attached dataset)
+  #   kagglehub  downloads `slug` with kagglehub, root = download dir
+  #   http       downloads each entry of `urls` into `cache_dir`
+  source:
+    kind: local
+    root: data/raw/toniot
+    slug: null
+    urls: []
+    cache_dir: data/raw/toniot
+    # Globs are relative to root. The layout of the UNSW share is
+    #   Raw_datasets/Network_dataset_pcaps/**      (PCAPs)
+    #   Processed_datasets/Processed_Network_dataset/Network_dataset_*.csv
+    # Adjust these if a mirror uses different folder names.
+    pcap_globs: ["**/*.pcap", "**/*.pcapng", "**/*.pcap.gz", "**/*.pcapng.gz", "**/*pcap*[0-9]"]
+    label_globs: ["**/Network_dataset_*.csv"]
+
+  label_source:
+    kind: toniot_network     # adapter in fhf/data/label_sources.py
+    columns:
+      ts: ts
+      src_ip: src_ip
+      src_port: src_port
+      dst_ip: dst_ip
+      dst_port: dst_port
+      proto: proto
+      duration: duration
+      label: type            # multiclass attack type
+    ts_unit: s
+
+  # Raw label value -> canonical class name. E0 writes the observed values to
+  # label_mapping.yaml; anything not listed here is rejected loudly.
+  label_map:
+    normal: normal
+    backdoor: backdoor
+    ddos: ddos
+    dos: dos
+    injection: injection
+    mitm: mitm
+    password: password
+    ransomware: ransomware
+    scanning: scanning
+    xss: xss
+  exclude_classes: []        # decide in E0 from support (e.g. mitm / ransomware)
+
+  # Classes whose intent is plausibly visible in payload content (E7 highlight).
+  payload_dependent_classes: [injection, xss, password]

@@ -1,0 +1,14 @@
+# A6: Does sequential context between payload segments help?
+id: A6
+variant: no_next
+tier: 3
+pipeline: fedhet
+seeds:
+- 0
+question: Does sequential context between payload segments help?
+done: Audit shows exactly one relation removed.
+overrides:
+  graph:
+    use_next: false
+  payload:
+    encoder_source: lora

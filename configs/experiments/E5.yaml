@@ -1,0 +1,15 @@
+# E5: How does client label skew change convergence and final macro-F1?
+id: E5
+variant: noniid_sweep
+tier: 2
+pipeline: fedhet
+seeds:
+- 0
+alpha_from: partition.alpha_sweep
+question: How does client label skew change convergence and final macro-F1?
+done: Two paired settings with equal total examples and no on-the-fly repartitioning.
+overrides:
+  payload:
+    encoder_source: lora
+  phase1:
+    allow_train: true

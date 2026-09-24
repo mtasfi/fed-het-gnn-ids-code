@@ -1,0 +1,13 @@
+# E6: What does the method cost in parameters, communication, time, memory and latency?
+id: E6
+variant: efficiency
+tier: 2
+pipeline: efficiency
+seeds:
+- 0
+question: What does the method cost in parameters, communication, time, memory and latency?
+done: Measured whole-model values replace theoretical extrapolation.
+source_experiment: E1
+overrides:
+  payload:
+    encoder_source: lora

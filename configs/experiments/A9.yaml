@@ -1,0 +1,14 @@
+# A9: How far can payload semantics alone go without flow features or graph context?
+id: A9
+variant: payload_only_head
+tier: core
+pipeline: payload_head
+seeds:
+- 0
+question: How far can payload semantics alone go without flow features or graph context?
+done: The Phase-1 head is evaluated once on test payloads; no training or encoder rerun.
+segment_to_flow_rule: mean of segment softmax probabilities, argmax (declared before looking at test labels)
+source_experiment: E1
+overrides:
+  payload:
+    encoder_source: lora

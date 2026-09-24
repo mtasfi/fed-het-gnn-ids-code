@@ -1,0 +1,12 @@
+# B1: Does the full method beat a cheap federated flow-statistics floor?
+id: B1
+variant: fedavg_mlp
+tier: 1
+pipeline: fed_mlp
+seeds:
+- 0
+question: Does the full method beat a cheap federated flow-statistics floor?
+done: Label space, split, client partition, class weighting, tuning rule and metric code match E1.
+overrides:
+  payload:
+    encoder_source: none

@@ -1,0 +1,14 @@
+# A1: How much predictive value comes from the payload channel?
+id: A1
+variant: no_payload
+tier: 1
+pipeline: fedhet
+seeds:
+- 0
+question: How much predictive value comes from the payload channel?
+done: Config diff shows only A1 fields; the graph still trains and classifies from flow statistics.
+overrides:
+  graph:
+    use_payload: false
+  payload:
+    encoder_source: none

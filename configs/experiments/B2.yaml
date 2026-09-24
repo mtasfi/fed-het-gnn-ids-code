@@ -1,0 +1,10 @@
+# B2: Does FedHetFormer-IDS outperform the closest graph-based federated prior work on the same split?
+id: B2
+variant: fedgatsage
+tier: 2
+pipeline: fedgatsage
+seeds:
+- 0
+question: Does FedHetFormer-IDS outperform the closest graph-based federated prior work on the same split?
+done: FedGATSage rerun on the exact E1 split, label map and seed; every deviation from the original code documented.
+overrides: {}

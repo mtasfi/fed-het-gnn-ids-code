@@ -1,0 +1,16 @@
+# B5: Do graph/payload gains exceed strong classical flow-feature baselines, and are they explained by class balancing alone?
+id: B5
+variant: classical
+tier: 1
+pipeline: classical
+seeds:
+- 0
+variants:
+- xgboost
+- xgboost_smote
+- random_forest
+- random_forest_smote
+question: Do graph/payload gains exceed strong classical flow-feature baselines, and are they explained by class
+  balancing alone?
+done: All four variants use identical split IDs, label map, metric code and test set; SMOTE never sees validation/test.
+overrides: {}

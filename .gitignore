@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+# local data, caches and run outputs (runs are archived separately, never committed)
+data/
+work/
+runs/
+results/
+*.pt
+*.parquet
+*.npy
+.ipynb_checkpoints/

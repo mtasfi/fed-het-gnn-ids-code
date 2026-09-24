@@ -1,0 +1,15 @@
+# E1: How accurately does the complete staged federated method classify attacks under non-IID training?
+id: E1
+variant: main
+tier: 1
+pipeline: fedhet
+seeds:
+- 0
+- 1
+question: How accurately does the complete staged federated method classify attacks under non-IID training?
+done: 2 complete seeds, no leakage, one command rebuilds aggregate results.
+overrides:
+  payload:
+    encoder_source: lora
+  phase1:
+    allow_train: true
