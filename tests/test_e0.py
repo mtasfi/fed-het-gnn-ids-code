@@ -1,0 +1,179 @@
+import os
+import sys
+
+import numpy as np
+import pandas as pd
+import pytest
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+from fhf.common.config import load_config
+from fhf.common.metrics import classification_report
+from fhf.common.utils import class_weights
+from fhf.data.federated_scaler import FederatedScaler, client_stats, combine, pre_transform
+from fhf.data.features import feature_columns
+from fhf.data.flow_extractor import extract_all, load_flows
+from fhf.data.label_sources import canonical_key
+from fhf.data.make_splits import make_split
+from fhf.data.partition_clients import partition
+from fhf.data.payload_rules import decide, to_text
+from fhf.data.pcap_match import match_flows
+from fhf.phase2.build_heterograph import payload_mask, shares_host_edges
+from synthetic import http_session, udp_packet, write_pcap
+
+
+@pytest.fixture
+def cfg():
+    return load_config('toniot')
+
+
+# ------------------------------------------------------------------ has_payload rule
+def test_rule_is_deterministic_and_case_preserving(cfg):
+    seg = [b"GET /?q=<ScRiPt>alert(1)</ScRiPt> HTTP/1.1\r\nHost: x\r\n\r\n"]
+    a, b = decide(seg, cfg.payload), decide(list(seg), cfg.payload)
+    assert a == b
+    assert a.has_payload == 1 and a.reason == 'ok'
+    assert '<ScRiPt>' in a.texts[0]
+
+
+def test_rule_reason_codes(cfg):
+    rule = cfg.payload
+    assert decide([], rule).reason == 'no_payload'
+    assert decide([b''], rule).reason == 'no_payload'
+    tls = b'\x16\x03\x01\x02\x00' + bytes(range(256)) * 2
+    assert decide([tls], rule).reason == 'tls_record'
+    rng = np.random.default_rng(0)
+    assert decide([rng.integers(0, 256, 1024, dtype=np.uint8).tobytes()], rule).reason == 'high_entropy'
+    assert decide([b'\x00\x01\x02\x03abc\x00\x00\x00\x00\x00'], rule).reason == 'unreadable_binary'
+    assert decide([b'ab'], rule).reason == 'too_short'
+
+
+def test_rule_keeps_only_readable_segments_in_order(cfg):
+    d = decide([b'\x16\x03\x01\x00\x10' + b'\x00' * 40, b"USER admin\r\n", b"PASS 123456\r\n", b"extra"], cfg.payload)
+    assert d.has_payload == 1
+    assert d.kept_indices == [1, 2]          # j_max = 3: the 4th segment is never considered
+    assert d.texts == ['USER admin\r\n', 'PASS 123456\r\n']
+
+
+def test_placeholder_replaces_runs(cfg):
+    assert to_text(b'ab\x00\x01\x02cd\xffef', '<NP>') == 'ab<NP>cd<NP>ef'
+
+
+# ------------------------------------------------------------------ extractor + matching
+def test_extractor_and_matching(tmp_path, cfg):
+    cap_dir = tmp_path / 'raw' / 'cap1'
+    cap_dir.mkdir(parents=True)
+    pkts = http_session('10.0.0.1', 40000, '10.0.0.9', 1000.0, b"GET /index.php?id=1' OR 1=1-- HTTP/1.1\r\n\r\n")
+    pkts += http_session('10.0.0.2', 40001, '10.0.0.9', 1001.0, b"GET / HTTP/1.1\r\n\r\n")
+    pkts += [(1002.0, udp_packet('10.0.0.3', 5353, '10.0.0.9', 53, b'\x12\x34\x01\x00'))]
+    # split one capture across two rotated files to exercise per_directory continuity
+    write_pcap(str(cap_dir / 'part1.pcap'), pkts[:5])
+    write_pcap(str(cap_dir / 'part2.pcap'), pkts[5:])
+
+    out = tmp_path / 'flows'
+    extract_all(cfg, [str(cap_dir / 'part1.pcap'), str(cap_dir / 'part2.pcap')], str(tmp_path / 'raw'), str(out))
+    flows = load_flows(str(out))
+    assert len(flows) == 3
+    sqli = flows[flows.src_port == 40000].iloc[0]
+    assert sqli['src_ip'] == '10.0.0.1' and sqli['dst_port_id'] == 80   # initiator = client
+    assert sqli['fwd_pkts'] == 5 and sqli['bwd_pkts'] == 3
+    assert sqli['n_segments_stored'] == 2                              # retransmission dropped
+    assert sqli['syn_cnt'] == 2 and sqli['fin_cnt'] == 2
+
+    labels = pd.DataFrame({
+        'row_id': ['r1', 'r2', 'r3'], 'ts': [1000.0, 1001.0, 1002.0], 'proto': [6, 6, 17],
+        'src_ip': ['10.0.0.1', '10.0.0.9', '10.0.0.3'], 'src_port': [40000, 80, 5353],
+        'dst_ip': ['10.0.0.9', '10.0.0.2', '10.0.0.9'], 'dst_port': [80, 40001, 53],
+        'raw_label': ['injection', 'normal', 'normal'],
+    })
+    labels['key'] = canonical_key(labels.proto, labels.src_ip, labels.src_port, labels.dst_ip, labels.dst_port)
+    matched, failures = match_flows(flows, labels, tolerance_s=2.0, offset_s=0.0)
+    assert (matched.match_status == 'matched').all() and failures.empty
+    assert matched.set_index('src_port').loc[40000, 'raw_label'] == 'injection'
+
+    # a label row with a conflicting duplicate inside the tolerance is ambiguous
+    dup = labels.iloc[[0]].assign(row_id='r1b', ts=1000.5, raw_label='xss')
+    matched2, _ = match_flows(flows, pd.concat([labels, dup]), tolerance_s=2.0, offset_s=0.0)
+    assert matched2.set_index('src_port').loc[40000, 'match_status'] == 'ambiguous_conflict'
+
+
+# ------------------------------------------------------------------ splits / partition
+def _fake_labeled(n_blocks=60, per_block=50, seed=0):
+    rng = np.random.default_rng(seed)
+    rows = []
+    classes = ['normal', 'xss', 'injection', 'password', 'ddos']
+    for b in range(n_blocks):
+        cls = classes[b % len(classes)]
+        for i in range(per_block):
+            label = cls if rng.random() < 0.8 else 'normal'
+            rows.append({'flow_uid': f'b{b}f{i}', 'capture_id': 'c', 'first_ts': b * 300 + i, 'label': label})
+    return pd.DataFrame(rows)
+
+
+def test_split_blocks_never_cross_and_partition_is_stable(cfg):
+    cfg.split.target_flows = 2000
+    cfg.split.rare_class_floor = 100
+    cfg.split.min_test_per_class = 5
+    labeled = _fake_labeled()
+    split, report = make_split(labeled, cfg, seed=0)
+    assert report['block_overlap_train_test'] == 0
+    assert split.groupby('block_id')['split'].nunique().max() == 1
+    assert report['split_ok'], report['problems']
+
+    p1, _ = partition(split, 5, 0.5, 0.1, seed=0)
+    p2, _ = partition(split, 5, 0.5, 0.1, seed=0)
+    pd.testing.assert_frame_equal(p1, p2)
+    assert set(p1.role) == {'train', 'val', 'test'}
+    assert p1.groupby('block_id')['client'].nunique().max() == 1
+    assert p1.groupby('block_id')['role'].nunique().max() == 1
+    assert sorted(p1.client.unique()) == [0, 1, 2, 3, 4]
+
+
+# ------------------------------------------------------------------ scaler / weights / metrics
+def test_federated_scaler_equals_central():
+    rng = np.random.default_rng(0)
+    parts = [rng.lognormal(size=(n, 4)) for n in (10, 50, 200)]
+    g = combine([client_stats(pre_transform(p, True)) for p in parts])
+    central = pre_transform(np.concatenate(parts), True)
+    np.testing.assert_allclose(g.mean, central.mean(0), rtol=1e-10)
+    np.testing.assert_allclose(g.m2 / g.n, central.var(0), rtol=1e-10)
+    s = FederatedScaler(True).fit_clients(parts)
+    np.testing.assert_allclose(s.transform(np.concatenate(parts)).mean(0), 0, atol=1e-5)
+
+
+def test_class_weights_absent_class_is_zero_not_inf():
+    w = class_weights([0, 0, 0, 1], num_classes=3)
+    assert w[2] == 0 and np.isfinite(w).all() and w[1] > w[0]
+
+
+def test_metrics_keep_absent_class_visible():
+    rep = classification_report([0, 0, 1, 1], [0, 1, 1, 1], ['a', 'b', 'c'], client_ids=[0, 0, 1, 1])
+    assert rep['summary']['n_classes_scored'] == 2
+    assert rep['per_class'].set_index('label').loc['c', 'support'] == 0
+    assert rep['summary']['worst_client_macro_f1'] <= rep['summary']['macro_f1'] + 1
+
+
+def test_no_identity_column_is_a_feature(cfg):
+    cols = feature_columns(cfg)
+    assert not {'src_ip', 'dst_ip', 'first_ts', 'flow_uid', 'src_port', 'dst_port_id'} & set(cols)
+
+
+# ------------------------------------------------------------------ graph pieces
+def test_shares_host_cap_and_window():
+    src = ['a'] * 6 + ['b'] * 3
+    ts = [0, 1, 2, 3, 100, 101, 0, 1, 2]
+    e = shares_host_edges(src, ts, window_s=60, kappa=2)
+    deg = np.bincount(e[0], minlength=9)
+    assert deg.max() <= 2
+    pairs = set(map(tuple, e.T))
+    assert (0, 4) not in pairs and (3, 4) not in pairs          # outside the window
+    assert all(src[u] == src[v] for u, v in pairs)                # same source only
+
+
+def test_mask_is_nested_and_deterministic():
+    uids = [f'f{i}' for i in range(1000)]
+    hp = np.ones(1000)
+    m25, m50 = payload_mask(uids, hp, 0.25), payload_mask(uids, hp, 0.5)
+    assert (m25 <= m50).all() and 0.2 < m25.mean() < 0.3
+    assert (payload_mask(uids, hp, 0.25) == m25).all()

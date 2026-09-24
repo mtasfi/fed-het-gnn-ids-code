@@ -1,0 +1,42 @@
+# UNSW-NB15: audited in E0 for completeness only. It has no XSS / SQLi labels,
+# so it is always the last choice (plan §2.2).
+dataset:
+  name: unsw_nb15
+
+  source:
+    kind: local
+    root: data/raw/unsw_nb15
+    slug: null
+    urls: []
+    cache_dir: data/raw/unsw_nb15
+    pcap_globs: ["**/*.pcap"]
+    label_globs: ["**/UNSW-NB15_[0-9].csv"]
+
+  label_source:
+    kind: unsw_nb15
+    # The four UNSW-NB15_*.csv files have no header row; columns by position.
+    columns:
+      src_ip: 0
+      src_port: 1
+      dst_ip: 2
+      dst_port: 3
+      proto: 4
+      ts: 28          # Stime
+      duration: 6     # dur
+      label: 47       # attack_cat (empty = normal)
+    ts_unit: s
+
+  label_map:
+    normal: normal
+    Fuzzers: fuzzers
+    Analysis: analysis
+    Backdoor: backdoor
+    Backdoors: backdoor
+    DoS: dos
+    Exploits: exploits
+    Generic: generic
+    Reconnaissance: scanning
+    Shellcode: shellcode
+    Worms: worms
+  exclude_classes: []
+  payload_dependent_classes: [exploits, shellcode]

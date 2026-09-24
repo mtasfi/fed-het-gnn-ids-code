@@ -1,0 +1,171 @@
+# Canonical configuration shared by every FedHetFormer-IDS run.
+#
+# Merge order: base.yaml -> datasets/<name>.yaml -> experiments/<id>.yaml -> CLI --set.
+# An experiment file may only change the factors its experiment names (plan §1:
+# "an ablation changes exactly one named factor"); the resolved config is written
+# to every run directory so the diff against E1 is auditable.
+#
+# Values set to null with a "LOCK IN E0" note must be filled in before any GPU run.
+# Runners refuse to start while they are null.
+
+project: fedhetformer-ids
+seed: 0
+
+paths:
+  work_dir: work        # matched flows, splits, caches (local, never uploaded)
+  runs_dir: runs        # one immutable directory per run (plan §5)
+  results_dir: results  # aggregated CSV / LaTeX / figures
+
+device: auto            # auto | cuda | cpu
+
+# ---------------------------------------------------------------- E0: extraction
+flow_extractor:
+  # Bidirectional flows keyed on the canonical 5-tuple. The initiator (first
+  # packet seen) is the "forward" direction.
+  idle_timeout_s: 120        # flow expires after this long without packets
+  active_timeout_s: 3600     # hard cap on flow length
+  close_on_fin_rst: true     # RST, or FIN seen in both directions, ends the flow
+  # per_file:      every capture file is an independent stream (parallel, fastest)
+  # per_directory: files in one directory are read in name order as one stream,
+  #                so flows crossing a rotated-file boundary stay whole
+  continuity: per_directory
+  include_ipv6: true
+  workers: 4
+  chunk_flows: 200000        # flows buffered in memory before a Parquet part is written
+
+payload:
+  j_max: 3                   # first J_max payload segments per flow, capture order
+  directions: both           # both | forward
+  max_bytes_per_segment: 2048  # raw bytes stored per segment (256 tokens never needs more)
+  # has_payload rule (E0.2); see fhf/data/payload_rules.py and docs/has_payload_rule.md
+  placeholder: "<NP>"        # replaces each run of non-printable bytes
+  min_printable_ratio: 0.75  # below this a segment is "unreadable_binary"
+  min_readable_chars: 4      # fewer printable chars than this is "too_short"
+  entropy_min_len: 64        # entropy test only on segments at least this long
+  entropy_threshold: 7.2     # bits/byte; above this a segment is "high_entropy"
+  # Payload representation fed to Phase 2 (experiments set this):
+  #   lora (E1: federated LoRA phi*) | frozen (A3) | hash (A2) | none (A1, B1)
+  encoder_source: lora
+  hash_features: 768
+
+matching:
+  time_tolerance_s: 2.0      # |flow start - label row start| after clock offset
+  clock_offset_s: 0.0        # label_ts - pcap_ts; estimate with `run_e0.py offset`
+  max_offset_search_s: 43200 # window used when estimating the offset
+
+# ---------------------------------------------------------------- E0: splits
+split:
+  block_seconds: 300         # capture/time block width; blocks never cross splits
+  target_flows: 75000        # sprint scale, whole blocks only (plan §2.2)
+  rare_class_floor: 300      # add whole blocks until every class has this many flows
+  test_fraction: 0.2
+  val_fraction: 0.1          # per client, latest whole blocks of its training data
+  min_test_per_class: 20     # E0 rejects the split if a kept class has fewer
+
+partition:
+  num_clients: 5
+  alpha_candidates: [0.3, 0.5, 1.0]   # E0 materialises all of these + IID
+  alpha: null                # LOCK IN E0: primary alpha used by E1 and all ablations
+  alpha_sweep: null          # LOCK IN E0: the two values for E5, e.g. [0.3, 1.0]
+
+features:
+  log1p: true                # per-value transform before scaling; needs no statistics
+  # Identity columns are never model features. Enforced in code (fhf/data/features.py):
+  # these names, and any column named like an IP address field, are rejected.
+  forbidden_columns: [src_ip, dst_ip, flow_uid, capture_id, capture_file, first_ts, last_ts,
+                      src_port, dst_port_id, block_id]
+
+# ---------------------------------------------------------------- Phase 1
+encoder:
+  hf_id: answerdotai/ModernBERT-base
+  revision: main             # pin to a commit hash after the first download (logged per run)
+  hidden_dim: 768
+  max_tokens: 256
+  attn_implementation: sdpa  # sdpa | eager (T4: no flash-attention-2)
+  precision: fp16            # fp16 autocast on T4; fp32 fallback is logged with a reason
+  batch_size: 32
+  embed_batch_size: 128
+  pooling: mean              # attention-mask mean pooling
+  lora:
+    r: 8
+    alpha: 16
+    dropout: 0.05
+    # Resolved against named_modules() of the loaded model; must match > 0 modules.
+    # ModernBERT: fused attention QKV is `layers.N.attn.Wqkv`, output is
+    # `layers.N.attn.Wo` (note: `layers.N.mlp.Wo` also exists, hence the `attn` anchor).
+    target_regex: '.*\.attn\.Wqkv$'
+
+phase1:
+  rounds: 5                  # R1 (sprint)
+  local_epochs: 1            # E1
+  lr: 2.0e-4
+  weight_decay: 0.01
+  warmup_ratio: 0.06
+  max_segments_per_client_round: null  # optional compute cap; null = full local data
+  allow_train: false         # only E1 / E5 may run Phase 1; ablations must reuse E1's phi*
+
+# ---------------------------------------------------------------- Phase 2
+graph:
+  use_payload: true          # A1 sets false: m_i := 0, no payload nodes, no encoder
+  use_next: true             # A6 sets false
+  use_shares_host: true      # A5 sets false
+  homogeneous: false         # A4 sets true
+  shares_host:
+    window_s: 60             # Δt
+    kappa: null              # LOCK IN E0: neighbour cap per flow
+
+gnn:
+  hidden_dim: 128            # d_h
+  layers: 2                  # L
+  dropout: 0.2
+
+phase2:
+  rounds: 10                 # R2 (sprint)
+  local_epochs: 2            # E2
+  lr: 1.0e-3
+  weight_decay: 5.0e-4
+  batch_size: 1024           # target flow nodes per step (forward is full-graph)
+
+mlp:
+  hidden_dims: [256, 128]
+  dropout: 0.2
+
+training:
+  grad_clip: 1.0
+  class_weight:
+    rule: laplace_inverse_frequency   # one shared rule for every neural model
+    max_weight: null
+
+early_stopping:
+  # Checkpoint = round with best sample-weighted mean client validation macro-F1.
+  # Training stops early only after `patience` rounds without min_delta improvement.
+  patience: null             # null = always run all rounds
+  min_delta: 0.001
+
+aggregation:
+  method: fedavg             # fedavg | performance (A7)
+
+# ---------------------------------------------------------------- baselines
+baselines:
+  fedgatsage:                # B2: rerun of the FedGATSage reproduction on the E1 split
+    repo_path: ../Fed_GNN    # checkout of mtasfi/Fed_GNN (the reproduction code); commit is recorded per run
+    num_rounds: 15           # paper schedule; FedGATSage has no validation-based selection
+    community: louvain       # the paper's community algorithm
+    hidden_dim: 256
+    rf_estimators: 100       # ensemble fusion forest, as in the reproduction
+
+# ---------------------------------------------------------------- evaluation
+evaluation:
+  zero_division: 0           # policy for P/R/F1 of classes with no predictions/support
+  latency_batch_size: 256
+  latency_repeats: 20
+
+# ---------------------------------------------------------------- tracking
+tracking:
+  # Comet is a mirror only: CSVs in the run directory are the record (plan §5).
+  # Only scalar metrics, config values and tags are sent. Never payload text,
+  # payload samples, IP addresses or any per-flow data.
+  comet: true
+  api_key: emuhTVn5AAwEm9ALtwsL4SkUo
+  project: fedhetformer-ids
+  workspace: null

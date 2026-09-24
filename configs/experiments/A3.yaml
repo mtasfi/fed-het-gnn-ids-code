@@ -1,0 +1,12 @@
+# A3: Does Phase-1 federated adaptation add value beyond a frozen pretrained encoder?
+id: A3
+variant: frozen_encoder
+tier: 2
+pipeline: fedhet
+seeds:
+- 0
+question: Does Phase-1 federated adaptation add value beyond a frozen pretrained encoder?
+done: Phase 1 is the only removed learning step; Phase 2 consumes dimension-matched cached embeddings.
+overrides:
+  payload:
+    encoder_source: frozen

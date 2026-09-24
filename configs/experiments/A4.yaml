@@ -1,0 +1,14 @@
+# A4: Do explicit node and relation types improve detection?
+id: A4
+variant: homogeneous
+tier: 2
+pipeline: fedhet
+seeds:
+- 0
+question: Do explicit node and relation types improve detection?
+done: The homogeneous representation is fully specified and no other architecture factor changes.
+overrides:
+  graph:
+    homogeneous: true
+  payload:
+    encoder_source: lora

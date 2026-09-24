@@ -1,0 +1,13 @@
+# A2: Is a transformer payload encoder worth its cost?
+id: A2
+variant: hashed_ngrams
+tier: 2
+pipeline: fedhet
+seeds:
+- 0
+question: Is a transformer payload encoder worth its cost?
+done: The vectorizer has no fit step; its exact parameters are in the manifest; no raw payload leaves a client.
+overrides:
+  payload:
+    encoder_source: hash
+    hash_features: 768

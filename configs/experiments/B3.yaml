@@ -1,0 +1,12 @@
+# B3: What performance cost is associated with federation?
+id: B3
+variant: central_hetgnn
+tier: 1
+pipeline: central_hetgnn
+seeds:
+- 0
+question: What performance cost is associated with federation?
+done: Architecture/data parity documented; no assumption that centralized must win.
+overrides:
+  payload:
+    encoder_source: lora

@@ -1,0 +1,8 @@
+# Fallback when the E0 timing probe puts ModernBERT Phase 1 over the sprint budget.
+# Note: this checkpoint is uncased (loses <ScRiPt>-style case tricks); record that in the run.
+encoder:
+  hf_id: distilbert-base-uncased
+  hidden_dim: 768
+  attn_implementation: sdpa
+  lora:
+    target_regex: '.*\.attention\.(q_lin|v_lin|out_lin)$'

@@ -1,0 +1,14 @@
+# A7: Does performance weighting improve over FedAvg?
+id: A7
+variant: performance_weighted
+tier: optional
+pipeline: fedhet
+seeds:
+- 0
+question: Does performance weighting improve over FedAvg?
+done: Metrics and config diff delivered, or marked not run.
+overrides:
+  aggregation:
+    method: performance
+  payload:
+    encoder_source: lora

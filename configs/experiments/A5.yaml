@@ -1,0 +1,14 @@
+# A5: Are gains coming from useful host context rather than IP memorisation?
+id: A5
+variant: no_shares_host
+tier: 1
+pipeline: fedhet
+seeds:
+- 0
+question: Are gains coming from useful host context rather than IP memorisation?
+done: No code path exposes IP to the model; the observed change is reported even if zero or positive.
+overrides:
+  graph:
+    use_shares_host: false
+  payload:
+    encoder_source: lora

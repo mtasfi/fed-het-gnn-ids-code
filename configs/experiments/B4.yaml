@@ -1,0 +1,11 @@
+# B4: How does the method compare with a federated LLM + GNN fusion design with differential privacy?
+id: B4
+variant: fedllm_style
+tier: optional
+pipeline: not_run
+seeds:
+- 0
+question: How does the method compare with a federated LLM + GNN fusion design with differential privacy?
+done: A compatible run with E1 metrics, or a written comparability note marked not_run.
+note: 'Not implemented in the sprint: see docs/b4_comparability_note.md.'
+overrides: {}
