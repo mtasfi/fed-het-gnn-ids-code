@@ -1,11 +1,12 @@
 __pycache__/
 *.pyc
 .pytest_cache/
-# local data, caches and run outputs (runs are archived separately, never committed)
-data/
-work/
-runs/
-results/
+# local data, caches and run outputs (runs are archived separately, never committed).
+# Anchored with a leading slash: an unanchored `data/` also matches the fhf/data/ package.
+/data/
+/work/
+/runs/
+/results/
 *.pt
 *.parquet
 *.npy
