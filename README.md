@@ -160,18 +160,9 @@ Every run gets these tags: `exp:<id>`, `variant:<name>`, `dataset:<name>`, `alph
 
 Comet is a mirror only; the CSVs are the record. Only scalar metrics, config values, tags and the numeric confusion matrix are sent. Stdout, code, git patches, environment details and files are never uploaded, so payload text and IP addresses cannot reach it.
 
-## Kaggle (T4)
+## Kaggle / Colab notebooks
 
-```python
-!git clone -b <branch> https://github.com/mtasfi/fed-het-gnn-ids-code.git /kaggle/working/code
-%cd /kaggle/working/code
-!pip install -q dpkt peft comet_ml imbalanced-learn tabulate
-# B2 only: !git clone https://github.com/mtasfi/Fed_GNN.git /kaggle/working/Fed_GNN && pip install -q python-louvain leidenalg igraph
-DATA = "--set dataset.source.kind=kaggle --set dataset.source.root=/kaggle/input/<slug> --set paths.work_dir=/kaggle/working/work --set paths.runs_dir=/kaggle/working/runs"
-!python experiments/run.py --exp E1 --dataset toniot {DATA}
-```
-
-Every round is checkpointed. If a session ends, rerun the same command with `--resume`. Copy `/kaggle/working/runs` and `work/*/cache` to a persistent dataset between sessions.
+`notebooks/` has one notebook per experiment (`E0_data_gate.ipynb`, `E1_main.ipynb`, …, `AGG_aggregate_results.ipynb`). Each one has a `PLATFORM = "kaggle" | "colab"` switch and clones this private repo with `GITHUB_TOKEN`. Order, state sharing between the two platforms and resuming are described in [notebooks/README.md](notebooks/README.md). To regenerate them after a setup change, run `python tools/make_notebooks.py`.
 
 ## Notes
 

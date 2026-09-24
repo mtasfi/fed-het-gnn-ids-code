@@ -31,3 +31,6 @@ comet_ml>=3.40
 
 # Tests
 pytest>=7
+
+# Notebook generator (tools/make_notebooks.py)
+# nbformat>=5.9
