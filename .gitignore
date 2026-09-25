@@ -11,3 +11,4 @@ __pycache__/
 *.parquet
 *.npy
 .ipynb_checkpoints/
+temp/

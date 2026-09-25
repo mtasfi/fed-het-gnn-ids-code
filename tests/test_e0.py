@@ -15,6 +15,7 @@ from fhf.data.federated_scaler import FederatedScaler, client_stats, combine, pr
 from fhf.data.features import feature_columns
 from fhf.data.flow_extractor import extract_all, load_flows
 from fhf.data.label_sources import canonical_key
+from fhf.data import match_checks
 from fhf.data.make_splits import make_split
 from fhf.data.partition_clients import partition
 from fhf.data.payload_rules import decide, to_text
@@ -96,6 +97,60 @@ def test_extractor_and_matching(tmp_path, cfg):
     dup = labels.iloc[[0]].assign(row_id='r1b', ts=1000.5, raw_label='xss')
     matched2, _ = match_flows(flows, pd.concat([labels, dup]), tolerance_s=2.0, offset_s=0.0)
     assert matched2.set_index('src_port').loc[40000, 'match_status'] == 'ambiguous_conflict'
+
+
+def _matched_frame():
+    """Five flows: two SQLi (one labelled injection, one labelled normal), one XSS, one
+    plain GET, one unmatched UDP flow whose 5-tuple exists in the labels at another time."""
+    fwd = lambda b: ([b, b'HTTP/1.1 200 OK\r\n\r\n'], [0, 1])
+    segs = [fwd(b"GET /?id=1%27+UNION+SELECT+user,pass+FROM+t HTTP/1.1\r\n"),
+            fwd(b"GET /?id=1' OR 1=1-- HTTP/1.1\r\n"),
+            fwd(b"GET /?q=%3Cscript%3Ealert(1)%3C/script%3E HTTP/1.1\r\n"),
+            fwd(b"GET /index.html HTTP/1.1\r\n"),
+            ([b'\x12\x34\x01\x00'], [0])]
+    return pd.DataFrame({
+        'flow_uid': list('abcde'), 'capture_id': 'c', 'first_ts': [100.0, 101.0, 102.0, 103.0, 104.0],
+        'last_ts': [100.5, 101.5, 102.5, 103.5, 104.0], 'proto': [6, 6, 6, 6, 17],
+        'dst_port_id': [80, 80, 80, 80, 53], 'duration': [0.5, 0.5, 0.5, 0.5, 0.0],
+        'end_reason': ['fin'] * 4 + ['idle'], 'key': np.array([1, 2, 3, 4, 5], dtype=np.uint64),
+        'match_status': ['matched'] * 4 + ['no_label_row'],
+        'label_row_id': ['r1', 'r2', 'r3', 'r4', None],
+        'raw_label': ['injection', 'normal', 'xss', 'normal', None],
+        'payload_segments': [s for s, _ in segs], 'payload_dirs': [d for _, d in segs],
+    })
+
+
+def test_match_checks_signatures_coverage_breakdown_gate():
+    matched = _matched_frame()
+    labels = pd.DataFrame({'row_id': ['r1', 'r2', 'r3', 'r4', 'r5', 'r_old'],
+                           'ts': [100.0, 101.0, 102.0, 103.0, 103.2, 5.0],
+                           'key': np.array([1, 2, 3, 4, 9, 5], dtype=np.uint64),
+                           'raw_label': ['injection', 'normal', 'xss', 'normal', 'normal', 'normal']})
+
+    ct = match_checks.signature_crosstab(matched, '<NP>').set_index('signature')
+    assert ct.loc['sqli', 'flows_hit'] == 2 and ct.loc['sqli', 'matched'] == 2
+    assert ct.loc['sqli', 'agreement'] == 0.5                 # one SQLi flow got `normal`
+    assert ct.loc['xss', 'agreement'] == 1.0
+    assert ct.loc['cmd_injection', 'flows_hit'] == 0 and np.isnan(ct.loc['cmd_injection', 'agreement'])
+    # the response (bwd) is never searched
+    assert not match_checks.signature_hits(matched.iloc[[3]], '<NP>').any(axis=None)
+
+    cov = match_checks.class_coverage(matched, labels, offset_s=0.0, tolerance_s=2.0).set_index('raw_label')
+    assert cov.loc['normal', 'rows_in_span'] == 3            # r_old (ts=5) is outside the capture span
+    assert cov.loc['normal', 'row_coverage'] == pytest.approx(2 / 3)
+
+    br = match_checks.failure_breakdown(matched, labels)
+    assert len(br) == 1 and br.iloc[0]['proto'] == 'udp' and bool(br.iloc[0]['key_in_labels'])
+    assert br.iloc[0]['share_of_all_flows'] == pytest.approx(0.2)
+
+    summary = {'match_rate': 0.8, 'ambiguous_rate': 0.0}
+    thresholds = {'min_match_rate': 0.8, 'max_ambiguous_rate': 0.05, 'min_class_row_coverage': 0.5,
+                  'min_rows_per_class': 1, 'min_signature_agreement': 0.9, 'min_signature_flows': 1}
+    result = match_checks.gate(summary, cov.reset_index(), ct.reset_index(), thresholds)
+    failed = {c['check'] for c in result['checks'] if c['ok'] is False}
+    assert not result['pass'] and failed == {'signature_agreement[sqli]'}
+    # null thresholds skip checks; nothing judged is not a pass
+    assert match_checks.gate(summary, cov.reset_index(), ct.reset_index(), {})['pass'] is False
 
 
 # ------------------------------------------------------------------ splits / partition

@@ -5,6 +5,7 @@ Steps (run individually or `all`, in this order):
     labels    label CSVs -> normalised label rows             (work/<ds>/labels.parquet)
     offset    estimate the PCAP/label clock offset            (e0/clock_offset.json)
     match     flows <-> label rows                            (matched.parquet, match_report.md, match_failures.csv)
+    check     signature vs label, per-class coverage, failures, gate   (e0/match_checks.md, match_gate.json, ...)
     payload   label map + has_payload rule + audit            (flows_labeled.parquet, dataset_audit.md, ...)
     split     blocks, train/test, Dirichlet partitions, templates  (splits/, e0/split_report.json, ...)
     kappa     shares_host density for candidate kappa         (e0/kappa_stats.csv)
@@ -29,6 +30,7 @@ import pandas as pd
 from fhf.common.config import dump_yaml, load_config, parse_set_args
 from fhf.common.utils import setup_logging
 from fhf.data import audit_payloads as audit
+from fhf.data import match_checks
 from fhf.data.flow_extractor import extract_all, load_flows
 from fhf.data.label_sources import load_labels
 from fhf.data.make_splits import make_split, save_report
@@ -36,10 +38,9 @@ from fhf.data.partition_clients import alpha_tag, partition
 from fhf.data.pcap_match import estimate_clock_offset, flow_keys, match_flows, match_summary
 from fhf.data.sources import resolve_files
 from fhf.data.store import Store
-from fhf.phase2.build_heterograph import shares_host_stats
 
 logger = logging.getLogger('run_e0')
-STEPS = ['extract', 'labels', 'offset', 'match', 'payload', 'split', 'kappa']
+STEPS = ['extract', 'labels', 'offset', 'match', 'check', 'payload', 'split', 'kappa']
 
 
 def step_extract(cfg, store, args):
@@ -121,6 +122,31 @@ def step_match(cfg, store, args):
     logger.info(f"Match: {summary['match_rate']:.2%} matched, {summary['ambiguous_rate']:.2%} ambiguous")
 
 
+def step_check(cfg, store, args):
+    matched = pd.read_parquet(store.matched, columns=['flow_uid', 'capture_id', 'first_ts', 'last_ts', 'proto',
+                                                      'dst_port_id', 'duration', 'end_reason', 'key', 'match_status',
+                                                      'label_row_id', 'raw_label', 'row_shared', 'match_dt_s',
+                                                      'payload_segments', 'payload_dirs'])
+    labels = pd.read_parquet(store.labels, columns=['row_id', 'ts', 'key', 'raw_label'])
+    offset, tol = float(cfg.matching.clock_offset_s), float(cfg.matching.time_tolerance_s)
+
+    crosstab = match_checks.signature_crosstab(matched, cfg.payload.placeholder)
+    coverage = match_checks.class_coverage(matched, labels, offset, tol)
+    breakdown = match_checks.failure_breakdown(matched, labels)
+    summary = match_summary(matched)
+    result = match_checks.gate(summary, coverage, crosstab, cfg.matching.get('gate'))
+
+    crosstab.to_csv(store.e0('match_signature_crosstab.csv'), index=False)
+    coverage.to_csv(store.e0('match_class_coverage.csv'), index=False)
+    breakdown.to_csv(store.e0('match_failure_breakdown.csv'), index=False)
+    with open(store.e0('match_gate.json'), 'w') as f:
+        json.dump(result, f, indent=2)
+    match_checks.write_md(store.e0('match_checks.md'), summary, coverage, crosstab, breakdown, result)
+    logger.info(f"Matching gate: {'PASS' if result['pass'] else 'FAIL'} ({result['judged']} checks judged)")
+    for c in result['checks']:
+        logger.info(f"  {c['check']}: {c['value']} (threshold {c['threshold']}) -> {c['ok']}")
+
+
 def step_payload(cfg, store, args):
     matched = pd.read_parquet(store.matched)
     labels = pd.read_parquet(store.labels, columns=['row_id', 'raw_label'])
@@ -183,6 +209,7 @@ def step_split(cfg, store, args):
 
 
 def step_kappa(cfg, store, args):
+    from fhf.phase2.build_heterograph import shares_host_stats  # imports torch; the other steps do not need it
     df = pd.read_parquet(store.labeled, columns=['flow_uid', 'src_ip', 'first_ts'])
     alpha = cfg.partition.alpha if cfg.partition.alpha is not None else cfg.partition.alpha_candidates[0]
     part = pd.read_parquet(store.partition(alpha))

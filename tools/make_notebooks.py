@@ -228,6 +228,10 @@ def run_cells(exp_id: str, special):
             new_code_cell('run("experiments/run_e0.py", "offset", "--dataset", DATASET)\n'
                           '# if the reported peak is clearly not 0: LOCKED["matching.clock_offset_s"] = <peak>, rerun setup'),
             new_code_cell('run("experiments/run_e0.py", "match", "--dataset", DATASET)'),
+            new_code_cell('run("experiments/run_e0.py", "check", "--dataset", DATASET)\n'
+                          '# payload signature vs label, per-class coverage, failure breakdown, gate (matching.gate)\n'
+                          'from IPython.display import Markdown, display\n'
+                          'display(Markdown(open(f"{STATE_DIR}/work/{DATASET}/e0/match_checks.md").read()))'),
             new_code_cell('run("experiments/run_e0.py", "payload", "--dataset", DATASET)'),
             new_code_cell('run("experiments/run_e0.py", "split", "--dataset", DATASET)'),
             new_code_cell('run("experiments/run_e0.py", "kappa", "--dataset", DATASET)'),
@@ -239,6 +243,7 @@ def run_cells(exp_id: str, special):
                           'E0 = f"{STATE_DIR}/work/{DATASET}/e0"\n'
                           'display(Markdown(open(f"{E0}/dataset_audit.md").read()))\n'
                           'display(Markdown(open(f"{E0}/match_report.md").read()))\n'
+                          'display(Markdown(open(f"{E0}/match_checks.md").read()))\n'
                           'print(open(f"{E0}/split_report.json").read())\n'
                           'display(pd.read_csv(f"{E0}/template_overlap_report.csv"))\n'
                           'display(pd.read_csv(f"{E0}/kappa_stats.csv"))'),

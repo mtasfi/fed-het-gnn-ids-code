@@ -75,6 +75,7 @@ python experiments/run_e0.py extract --dataset toniot     # PCAP -> flows + firs
 python experiments/run_e0.py labels  --dataset toniot
 python experiments/run_e0.py offset  --dataset toniot     # if the peak is not 0: --set matching.clock_offset_s=<peak>
 python experiments/run_e0.py match   --dataset toniot
+python experiments/run_e0.py check   --dataset toniot     # signature vs label, coverage, failures, gate
 python experiments/run_e0.py payload --dataset toniot     # label map + has_payload rule + audit
 python experiments/run_e0.py split   --dataset toniot     # blocks, train/test, Dirichlet partitions, templates
 python experiments/run_e0.py kappa   --dataset toniot
@@ -85,10 +86,11 @@ python experiments/run_e0.py kappa   --dataset toniot
 The reports go to `work/toniot/e0/`:
 - `dataset_audit.md`, `payload_availability_by_class.csv`, `label_mapping.yaml`, `has_payload_reason_counts.csv`
 - `match_report.md`, `match_failures.csv`, `match_trace_sample.csv`
+- `match_checks.md`, `match_gate.json`, `match_signature_crosstab.csv`, `match_class_coverage.csv`, `match_failure_breakdown.csv`
 - `split_report.json`, `client_class_distribution_alpha=*.csv`, `leakage_log.json`
 - `template_overlap_report.csv`, `kappa_stats.csv`
 
-**E0 stop rule:** do not start GPU work if any of these hold: matching is unreliable, a key class has lost its payloads, labels are ambiguous, or κ makes the graph dense.
+**E0 stop rule:** do not start GPU work if any of these hold: matching is unreliable (`match_gate.json` fails; thresholds in `matching.gate`), a key class has lost its payloads, labels are ambiguous, or κ makes the graph dense.
 
 Then lock these values in `configs/base.yaml`:
 - `partition.alpha`: the primary α;

@@ -52,6 +52,15 @@ matching:
   time_tolerance_s: 2.0      # |flow start - label row start| after clock offset
   clock_offset_s: 0.0        # label_ts - pcap_ts; estimate with `run_e0.py offset`
   max_offset_search_s: 43200 # window used when estimating the offset
+  # `run_e0.py check` (fhf/data/match_checks.py). Fixed before looking at the
+  # results; a null threshold skips that check. Values are the researcher's choice.
+  gate:
+    min_match_rate: 0.80           # share of extracted flows matched to a label row
+    max_ambiguous_rate: 0.05       # share of flows with conflicting candidate labels
+    min_class_row_coverage: 0.80   # per raw label: label rows inside the capture spans claimed by a flow
+    min_rows_per_class: 50         # classes with fewer rows in span are reported, not judged
+    min_signature_agreement: 0.90  # signature-hit flows labelled with the expected class
+    min_signature_flows: 20        # signatures with fewer matched hits are reported, not judged
 
 # ---------------------------------------------------------------- E0: splits
 split:
