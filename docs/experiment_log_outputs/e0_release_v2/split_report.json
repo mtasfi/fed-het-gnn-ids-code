@@ -1,0 +1,95 @@
+{
+  "seed": 0,
+  "flows_selected": 195141,
+  "blocks_selected": 125,
+  "blocks_train": 93,
+  "blocks_test": 32,
+  "test_fraction_realised": 0.268518660865733,
+  "rare_class_floor": {
+    "mitm": {
+      "blocks_added": 16,
+      "final_count": 300,
+      "floor_met": true
+    },
+    "ransomware": {
+      "blocks_added": 5,
+      "final_count": 432,
+      "floor_met": true,
+      "blocks_holding_class": 8,
+      "min_blocks_met": true
+    },
+    "injection": {
+      "blocks_added": 5,
+      "final_count": 5529,
+      "floor_met": true,
+      "blocks_holding_class": 8,
+      "min_blocks_met": true
+    },
+    "password": {
+      "blocks_added": 2,
+      "final_count": 11737,
+      "floor_met": true,
+      "blocks_holding_class": 8,
+      "min_blocks_met": true
+    },
+    "scanning": {
+      "blocks_added": 6,
+      "final_count": 10798,
+      "floor_met": true,
+      "blocks_holding_class": 8,
+      "min_blocks_met": true
+    },
+    "xss": {
+      "blocks_added": 6,
+      "final_count": 35395,
+      "floor_met": true,
+      "blocks_holding_class": 8,
+      "min_blocks_met": true
+    }
+  },
+  "class_counts": {
+    "backdoor": {
+      "test": 2896,
+      "train": 11222
+    },
+    "ddos": {
+      "test": 16118,
+      "train": 31905
+    },
+    "dos": {
+      "test": 13676,
+      "train": 45543
+    },
+    "injection": {
+      "test": 1638,
+      "train": 3891
+    },
+    "mitm": {
+      "test": 61,
+      "train": 239
+    },
+    "normal": {
+      "test": 3031,
+      "train": 6559
+    },
+    "password": {
+      "test": 4609,
+      "train": 7128
+    },
+    "ransomware": {
+      "test": 235,
+      "train": 197
+    },
+    "scanning": {
+      "test": 2929,
+      "train": 7869
+    },
+    "xss": {
+      "test": 7206,
+      "train": 28189
+    }
+  },
+  "block_overlap_train_test": 0,
+  "problems": [],
+  "split_ok": true
+}

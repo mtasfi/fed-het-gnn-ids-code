@@ -1,0 +1,49 @@
+dataset: toniot
+excluded_classes: []
+merge_classes: {}
+raw_labels:
+  scanning:
+    canonical: scanning
+    label_rows: 6348840
+    label_rows_matched_by_a_flow: 194860
+    row_coverage: 0.030692220941148304
+  ddos:
+    canonical: ddos
+    label_rows: 6165008
+    label_rows_matched_by_a_flow: 1067502
+    row_coverage: 0.17315500644930226
+  dos:
+    canonical: dos
+    label_rows: 2535691
+    label_rows_matched_by_a_flow: 5533
+    row_coverage: 0.0021820482069779008
+  password:
+    canonical: password
+    label_rows: 1718568
+    label_rows_matched_by_a_flow: 496281
+    row_coverage: 0.28877588783219516
+  xss:
+    canonical: xss
+    label_rows: 1620359
+    label_rows_matched_by_a_flow: 411466
+    row_coverage: 0.25393508475590904
+  injection:
+    canonical: injection
+    label_rows: 327464
+    label_rows_matched_by_a_flow: 64251
+    row_coverage: 0.19620782742530476
+  normal:
+    canonical: normal
+    label_rows: 317545
+    label_rows_matched_by_a_flow: 74897
+    row_coverage: 0.23586263364247587
+  backdoor:
+    canonical: backdoor
+    label_rows: 304494
+    label_rows_matched_by_a_flow: 213207
+    row_coverage: 0.7002009891820529
+  mitm:
+    canonical: mitm
+    label_rows: 1052
+    label_rows_matched_by_a_flow: 438
+    row_coverage: 0.41634980988593157

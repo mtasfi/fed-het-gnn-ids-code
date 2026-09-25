@@ -1,0 +1,216 @@
+code @ ffaa618da6
+[?25hHF user: mtasfi
+HF push works: https://huggingface.co/datasets/mtasfi/toniot-fhf-processed
+13G	/tmp/toniot_raw
+ Filesystem      Size  Used Avail Use% Mounted on
+overlay         8.0T  6.9T  1.1T  87% /
+
+18 capture files, 20 label CSVs
+  pcap  MITM_normal1.pcap 800 MB
+  pcap  MITM_normal4.pcap 191 MB
+  pcap  injection_normal1.pcap 842 MB
+  pcap  injection_normal4.pcap 291 MB
+  pcap  normal_DDoS_1.pcap 174 MB
+  pcap  normal_DDoS_12.pcap 435 MB
+  pcap  normal_DDoS_4.pcap 571 MB
+  pcap  normal_DoS_1.pcap 679 MB
+  pcap  normal_DoS_5.pcap 621 MB
+  pcap  normal_XSS4.pcap 644 MB
+  pcap  normal_XSS6.pcap 645 MB
+  pcap  normal_backdoor.pcap 573 MB
+  pcap  normal_runsomware1.pcap 219 MB
+  pcap  normal_runsomware2.pcap 1,035 MB
+  pcap  normal_scanning1.pcap 618 MB
+  pcap  normal_scanning6.pcap 480 MB
+  pcap  password_normal1.pcap 560 MB
+  pcap  password_normal5.pcap 645 MB
+  label Network_dataset_10.csv
+  label Network_dataset_12.csv
+  label Network_dataset_13.csv
+  label Network_dataset_14.csv
+  label Network_dataset_15.csv
+  label Network_dataset_16.csv
+  label Network_dataset_17.csv
+  label Network_dataset_18.csv
+  label Network_dataset_19.csv
+  label Network_dataset_2.csv
+  label Network_dataset_20.csv
+  label Network_dataset_21.csv
+  label Network_dataset_23.csv
+  label Network_dataset_3.csv
+  label Network_dataset_4.csv
+  label Network_dataset_5.csv
+  label Network_dataset_6.csv
+  label Network_dataset_7.csv
+  label Network_dataset_8.csv
+  label Network_dataset_9.csv
+$ run_e0.py extract
+2026-09-25 17:26:20,337 INFO run_e0: ==== E0 step: extract ====
+2026-09-25 17:26:20,340 INFO fhf.data.sources: toniot: root=/tmp/toniot_raw, 18 capture files, 20 label files
+2026-09-25 17:26:20,342 INFO fhf.data.flow_extractor: Extracting 1 capture unit(s) from 18 file(s) with 4 worker(s)
+2026-09-25 17:51:21,704 INFO run_e0: Extraction done:
+    packets  non_ip  fragments  parse_errors  other_proto    flows  retransmit_segments  files capture_id
+0  45532332  419877        554             0        66422  5450863                72843     18          .
+$ run_e0.py labels
+2026-09-25 17:51:23,138 INFO run_e0: ==== E0 step: labels ====
+2026-09-25 17:51:23,141 INFO fhf.data.sources: toniot: root=/tmp/toniot_raw, 18 capture files, 20 label files
+2026-09-25 17:51:35,645 INFO fhf.data.label_sources:   Network_dataset_10.csv: 1,000,000 label rows
+2026-09-25 17:51:48,169 INFO fhf.data.label_sources:   Network_dataset_12.csv: 1,000,000 label rows
+2026-09-25 17:52:00,879 INFO fhf.data.label_sources:   Network_dataset_13.csv: 1,000,000 label rows
+2026-09-25 17:52:13,857 INFO fhf.data.label_sources:   Network_dataset_14.csv: 1,000,000 label rows
+2026-09-25 17:52:26,327 INFO fhf.data.label_sources:   Network_dataset_15.csv: 1,000,000 label rows
+2026-09-25 17:52:38,535 INFO fhf.data.label_sources:   Network_dataset_16.csv: 1,000,000 label rows
+2026-09-25 17:52:51,480 INFO fhf.data.label_sources:   Network_dataset_17.csv: 1,000,000 label rows
+2026-09-25 17:53:04,548 INFO fhf.data.label_sources:   Network_dataset_18.csv: 1,000,000 label rows
+2026-09-25 17:53:16,643 INFO fhf.data.label_sources:   Network_dataset_19.csv: 1,000,000 label rows
+2026-09-25 17:53:29,079 INFO fhf.data.label_sources:   Network_dataset_2.csv: 1,000,000 label rows
+2026-09-25 17:53:42,069 INFO fhf.data.label_sources:   Network_dataset_20.csv: 1,000,000 label rows
+2026-09-25 17:53:54,854 INFO fhf.data.label_sources:   Network_dataset_21.csv: 1,000,000 label rows
+2026-09-25 17:53:58,754 INFO fhf.data.label_sources:   Network_dataset_23.csv: 339,021 label rows
+2026-09-25 17:54:11,004 INFO fhf.data.label_sources:   Network_dataset_3.csv: 1,000,000 label rows
+2026-09-25 17:54:23,252 INFO fhf.data.label_sources:   Network_dataset_4.csv: 1,000,000 label rows
+2026-09-25 17:54:34,779 INFO fhf.data.label_sources:   Network_dataset_5.csv: 1,000,000 label rows
+2026-09-25 17:54:46,601 INFO fhf.data.label_sources:   Network_dataset_6.csv: 1,000,000 label rows
+2026-09-25 17:54:59,193 INFO fhf.data.label_sources:   Network_dataset_7.csv: 1,000,000 label rows
+2026-09-25 17:55:10,976 INFO fhf.data.label_sources:   Network_dataset_8.csv: 1,000,000 label rows
+2026-09-25 17:55:22,152 INFO fhf.data.label_sources:   Network_dataset_9.csv: 1,000,000 label rows
+2026-09-25 17:55:42,082 INFO run_e0: 19,339,021 label rows -> /kaggle/working/fhf_state/work/toniot/labels.parquet
+$ run_e0.py offset
+2026-09-25 17:55:43,996 INFO run_e0: ==== E0 step: offset ====
+2026-09-25 17:56:13,661 INFO run_e0: Clock offset estimate: 0.0 s (peak share 96.89%, 101457 pairs). Top: [(0.0, 98300), (30246.0, 17), (30689.0, 14), (5121.0, 14), (686.0, 12)]
+2026-09-25 17:56:13,661 INFO run_e0: If the peak is clear and not 0, set matching.clock_offset_s to it before `match`.
+$ run_e0.py match
+2026-09-25 17:56:14,987 INFO run_e0: ==== E0 step: match ====
+2026-09-25 17:58:50,185 INFO run_e0: Match: 49.12% matched, 0.00% ambiguous
+$ run_e0.py check
+2026-09-25 17:58:54,210 INFO run_e0: ==== E0 step: check ====
+2026-09-25 18:02:57,973 INFO run_e0: Matching gate: FAIL (14 checks judged)
+2026-09-25 18:02:57,974 INFO run_e0:   match_rate: 0.49116350933787917 (threshold 0.8) -> False
+2026-09-25 18:02:57,975 INFO run_e0:   ambiguous_rate: 0.0 (threshold 0.05) -> True
+2026-09-25 18:02:57,975 INFO run_e0:   row_coverage[backdoor]: 0.7002009891820529 (threshold 0.8) -> False
+2026-09-25 18:02:57,975 INFO run_e0:   row_coverage[ddos]: 0.17315500644930226 (threshold 0.8) -> False
+2026-09-25 18:02:57,975 INFO run_e0:   row_coverage[dos]: 0.0021820482069779008 (threshold 0.8) -> False
+2026-09-25 18:02:57,975 INFO run_e0:   row_coverage[injection]: 0.19620782742530476 (threshold 0.8) -> False
+2026-09-25 18:02:57,975 INFO run_e0:   row_coverage[mitm]: 0.43931795386158473 (threshold 0.8) -> False
+2026-09-25 18:02:57,975 INFO run_e0:   row_coverage[normal]: 0.23864403971399803 (threshold 0.8) -> False
+2026-09-25 18:02:57,976 INFO run_e0:   row_coverage[password]: 0.28877588783219516 (threshold 0.8) -> False
+2026-09-25 18:02:57,976 INFO run_e0:   row_coverage[scanning]: 0.030692220941148304 (threshold 0.8) -> False
+2026-09-25 18:02:57,976 INFO run_e0:   row_coverage[xss]: 0.25393508475590904 (threshold 0.8) -> False
+2026-09-25 18:02:57,976 INFO run_e0:   signature_agreement[sqli]: 0.9965065502183406 (threshold 0.9) -> True
+2026-09-25 18:02:57,976 INFO run_e0:   signature_agreement[cmd_injection]: 0.19047619047619047 (threshold 0.9) -> False
+2026-09-25 18:02:57,976 INFO run_e0:   signature_agreement[xss]: 0.9985903580490555 (threshold 0.9) -> True
+$ run_e0.py payload
+2026-09-25 18:03:01,292 INFO run_e0: ==== E0 step: payload ====
+2026-09-25 18:08:00,524 INFO run_e0: 2,677,265 labelled flows, has_payload rate 30.13%
+2026-09-25 18:08:00,525 INFO run_e0: Payload-dependent classes ['injection', 'xss', 'password']: has_payload rates {'password': 0.746, 'xss': 0.715, 'injection': 0.795}. Automatic check (every payload-dependent class > 20% has_payload): PASS. The final payload-usable decision is the researcher's; record it here before GPU work.
+$ run_e0.py split
+2026-09-25 18:08:06,085 INFO run_e0: ==== E0 step: split ====
+2026-09-25 18:08:16,054 WARNING fhf.data.make_splits: Split problems (E0 stop rule): class 'ddos' has no training flows; class 'dos' has 0 test flows (< 20); class 'injection' has no training flows; class 'scanning' has 0 test flows (< 20); class 'xss' has 0 test flows (< 20)
+Traceback (most recent call last):
+  File "/kaggle/working/fed-het-gnn-ids-code/experiments/run_e0.py", line 252, in <module>
+    main()
+  File "/kaggle/working/fed-het-gnn-ids-code/experiments/run_e0.py", line 248, in main
+    globals()[f'step_{step}'](cfg, store, args)
+  File "/kaggle/working/fed-het-gnn-ids-code/experiments/run_e0.py", line 189, in step_split
+    part, info = partition(split, int(cfg.partition.num_clients), alpha, float(cfg.split.val_fraction),
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/kaggle/working/fed-het-gnn-ids-code/fhf/data/partition_clients.py", line 50, in partition
+    raise RuntimeError(f"Could not draw a partition with every client holding >= 2 training blocks "
+RuntimeError: Could not draw a partition with every client holding >= 2 training blocks (alpha=0.3, 5 clients). Use fewer clients or smaller blocks.
+SPLIT FAILED (release is still exported, without splits/): run_e0.py split exited with 1
+{
+  "seed": 0,
+  "flows_selected": 241814,
+  "blocks_selected": 17,
+  "blocks_train": 7,
+  "blocks_test": 10,
+  "test_fraction_realised": 0.232257023993648,
+  "rare_class_floor": {
+    "dos": {
+      "blocks_added": 1,
+      "final_count": 15213,
+      "floor_met": true
+    },
+    "injection": {
+      "blocks_added": 1,
+      "final_count": 14338,
+      "floor_met": true
+    },
+    "mitm": {
+      "blocks_added": 6,
+      "final_count": 314,
+      "floor_met": true
+    },
+    "scanning": {
+      "blocks_added": 1,
+      "final_count": 123772,
+      "floor_met": true
+    }
+  },
+  "class_counts": {
+    "backdoor": {
+      "test": 4000,
+      "train": 2004
+    },
+    "ddos": {
+      "test": 27616,
+      "train": 0
+    },
+    "dos": {
+      "test": 0,
+      "train": 15213
+    },
+    "injection": {
+      "test": 14338,
+      "train": 0
+    },
+    "mitm": {
+      "test": 109,
+      "train": 205
+    },
+    "normal": {
+      "test": 5251,
+      "train": 4284
+    },
+    "password": {
+      "test": 4849,
+      "train": 14842
+    },
+    "scanning": {
+      "test": 0,
+      "train": 123772
+    },
+    "xss": {
+      "test": 0,
+      "train": 25331
+    }
+  },
+  "block_overlap_train_test": 0,
+  "problems": [
+    "class 'ddos' has no training flows",
+    "class 'dos' has 0 test flows (< 20)",
+    "class 'injection' has no training flows",
+    "class 'scanning' has 0 test flows (< 20)",
+    "class 'xss' has 0 test flows (< 20)"
+  ],
+  "split_ok": false
+}
+flows.parquet: 2,677,265 rows, 76 columns
+payloads.parquet: 2,768,320 segments
+payloads.parquet matches flows_labeled.payload_texts for 806,567 flows
+4.0K	/kaggle/working/release_v1/resolved_config.yaml
+4.0K	/kaggle/working/release_v1/README.md
+195M	/kaggle/working/release_v1/payloads.parquet
+295M	/kaggle/working/release_v1/flows.parquet
+4.0K	/kaggle/working/release_v1/manifest.json
+154M	/kaggle/working/release_v1/e0
+
+https://huggingface.co/datasets/mtasfi/toniot-fhf-processed (private, tag v1)
+/usr/local/lib/python3.12/dist-packages/mistune.py:435: SyntaxWarning: invalid escape sequence '\|'
+  cells[i][c] = re.sub('\\\\\|', '|', cell)
+/usr/local/lib/python3.12/dist-packages/nbconvert/filters/filter_links.py:36: SyntaxWarning: invalid escape sequence '\_'
+  text = re.sub(r'_', '\_', text) # Escape underscores in display text
+[NbConvertApp] Converting notebook __notebook__.ipynb to notebook
+[NbConvertApp] Writing 107796 bytes to __notebook__.ipynb
+[NbConvertApp] Converting notebook __notebook__.ipynb to html
+[NbConvertApp] Writing 432086 bytes to __results__.html

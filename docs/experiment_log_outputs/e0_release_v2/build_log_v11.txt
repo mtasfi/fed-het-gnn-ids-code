@@ -1,0 +1,262 @@
+code @ 8a105fc7f5
+[?25h..............                                                           [100%]
+14 passed in 33.32s
+ 
+HF user: mtasfi
+HF push works: https://huggingface.co/datasets/mtasfi/toniot-fhf-processed
+13G	/tmp/toniot_raw
+ Filesystem      Size  Used Avail Use% Mounted on
+overlay         8.0T  6.9T  1.1T  87% /
+
+18 capture files, 23 label CSVs
+  pcap  MITM_normal1.pcap 800 MB
+  pcap  MITM_normal4.pcap 191 MB
+  pcap  injection_normal1.pcap 842 MB
+  pcap  injection_normal4.pcap 291 MB
+  pcap  normal_DDoS_1.pcap 174 MB
+  pcap  normal_DDoS_12.pcap 435 MB
+  pcap  normal_DDoS_4.pcap 571 MB
+  pcap  normal_DoS_1.pcap 679 MB
+  pcap  normal_DoS_5.pcap 621 MB
+  pcap  normal_XSS4.pcap 644 MB
+  pcap  normal_XSS6.pcap 645 MB
+  pcap  normal_backdoor.pcap 573 MB
+  pcap  normal_runsomware1.pcap 219 MB
+  pcap  normal_runsomware2.pcap 1,035 MB
+  pcap  normal_scanning1.pcap 618 MB
+  pcap  normal_scanning6.pcap 480 MB
+  pcap  password_normal1.pcap 560 MB
+  pcap  password_normal5.pcap 645 MB
+  label Network_dataset_1.csv
+  label Network_dataset_10.csv
+  label Network_dataset_11.csv
+  label Network_dataset_12.csv
+  label Network_dataset_13.csv
+  label Network_dataset_14.csv
+  label Network_dataset_15.csv
+  label Network_dataset_16.csv
+  label Network_dataset_17.csv
+  label Network_dataset_18.csv
+  label Network_dataset_19.csv
+  label Network_dataset_2.csv
+  label Network_dataset_20.csv
+  label Network_dataset_21.csv
+  label Network_dataset_22.csv
+  label Network_dataset_23.csv
+  label Network_dataset_3.csv
+  label Network_dataset_4.csv
+  label Network_dataset_5.csv
+  label Network_dataset_6.csv
+  label Network_dataset_7.csv
+  label Network_dataset_8.csv
+  label Network_dataset_9.csv
+$ run_e0.py extract
+2026-09-25 18:47:38,740 INFO run_e0: ==== E0 step: extract ====
+2026-09-25 18:47:38,743 INFO fhf.data.sources: toniot: root=/tmp/toniot_raw, 18 capture files, 23 label files
+2026-09-25 18:47:38,743 INFO fhf.data.flow_extractor: Extracting 18 capture unit(s) from 18 file(s) with 4 worker(s)
+2026-09-25 19:00:02,504 INFO run_e0: Extraction done:
+    packets  non_ip  fragments  parse_errors  other_proto    flows  retransmit_segments  files               capture_id
+0    658119    1811         13             0          583    49739                    3      1   injection_normal4.pcap
+1   2084329    7545          1             0          124      237                12564      1        MITM_normal4.pcap
+2    896836    2650          9             0            9   120019                 3091      1       normal_DDoS_1.pcap
+3   1717419    8778         18             0         2111   149932                  141      1   injection_normal1.pcap
+4   1088125    4247         13             0          338    67392                   35      1        normal_DoS_1.pcap
+5   3307360    7861         49             0           20   457720                 1254      1      normal_DDoS_12.pcap
+6   8240128   27126         34             0          916     6608                32379      1        MITM_normal1.pcap
+7   4000000   10500          2             0           81   518533                10677      1       normal_DDoS_4.pcap
+8   2000000    4368          3             0         1080   211765                  541      1         normal_XSS4.pcap
+9   2000000    2895          2             0         1022   205823                  405      1         normal_XSS6.pcap
+10   357819   13983         53             0         7642    23295                 1533      1  normal_runsomware1.pcap
+11   625737   12274         63             0          550    79862                   15      1    normal_scanning1.pcap
+12  6171383   39126          0             0         1395   834068                   12      1        normal_DoS_5.pcap
+13  2095430   98368         83             0        26946   560391                   82      1     normal_backdoor.pcap
+14  1905124   64081        130             0        14766    60705                 9768      1  normal_runsomware2.pcap
+15  2351035   17544         63             0         5018   238827                  152      1    password_normal1.pcap
+16  2773805   12662          7             0         2883   278553                   18      1    password_normal5.pcap
+17  3259683   84058         11             0          938  1587809                  239      1    normal_scanning6.pcap
+$ run_e0.py labels
+2026-09-25 19:00:03,507 INFO run_e0: ==== E0 step: labels ====
+2026-09-25 19:00:03,510 INFO fhf.data.sources: toniot: root=/tmp/toniot_raw, 18 capture files, 23 label files
+2026-09-25 19:00:15,810 INFO fhf.data.label_sources:   Network_dataset_1.csv: 1,000,000 label rows
+2026-09-25 19:00:26,820 INFO fhf.data.label_sources:   Network_dataset_10.csv: 1,000,000 label rows
+2026-09-25 19:00:38,054 INFO fhf.data.label_sources:   Network_dataset_11.csv: 1,000,000 label rows
+2026-09-25 19:00:49,660 INFO fhf.data.label_sources:   Network_dataset_12.csv: 1,000,000 label rows
+2026-09-25 19:01:01,931 INFO fhf.data.label_sources:   Network_dataset_13.csv: 1,000,000 label rows
+2026-09-25 19:01:13,572 INFO fhf.data.label_sources:   Network_dataset_14.csv: 1,000,000 label rows
+2026-09-25 19:01:25,992 INFO fhf.data.label_sources:   Network_dataset_15.csv: 1,000,000 label rows
+2026-09-25 19:01:37,825 INFO fhf.data.label_sources:   Network_dataset_16.csv: 1,000,000 label rows
+2026-09-25 19:01:50,019 INFO fhf.data.label_sources:   Network_dataset_17.csv: 1,000,000 label rows
+2026-09-25 19:02:02,023 INFO fhf.data.label_sources:   Network_dataset_18.csv: 1,000,000 label rows
+2026-09-25 19:02:14,654 INFO fhf.data.label_sources:   Network_dataset_19.csv: 1,000,000 label rows
+2026-09-25 19:02:26,494 INFO fhf.data.label_sources:   Network_dataset_2.csv: 1,000,000 label rows
+2026-09-25 19:02:38,110 INFO fhf.data.label_sources:   Network_dataset_20.csv: 1,000,000 label rows
+2026-09-25 19:02:51,116 INFO fhf.data.label_sources:   Network_dataset_21.csv: 1,000,000 label rows
+2026-09-25 19:03:02,835 INFO fhf.data.label_sources:   Network_dataset_22.csv: 1,000,000 label rows
+2026-09-25 19:03:06,446 INFO fhf.data.label_sources:   Network_dataset_23.csv: 339,021 label rows
+2026-09-25 19:03:17,846 INFO fhf.data.label_sources:   Network_dataset_3.csv: 1,000,000 label rows
+2026-09-25 19:03:28,773 INFO fhf.data.label_sources:   Network_dataset_4.csv: 1,000,000 label rows
+2026-09-25 19:03:39,723 INFO fhf.data.label_sources:   Network_dataset_5.csv: 1,000,000 label rows
+2026-09-25 19:03:51,007 INFO fhf.data.label_sources:   Network_dataset_6.csv: 1,000,000 label rows
+2026-09-25 19:04:02,919 INFO fhf.data.label_sources:   Network_dataset_7.csv: 1,000,000 label rows
+2026-09-25 19:04:14,149 INFO fhf.data.label_sources:   Network_dataset_8.csv: 1,000,000 label rows
+2026-09-25 19:04:24,859 INFO fhf.data.label_sources:   Network_dataset_9.csv: 1,000,000 label rows
+2026-09-25 19:04:48,828 INFO run_e0: 22,339,021 label rows -> /kaggle/working/fhf_state/work/toniot/labels.parquet
+$ run_e0.py offset
+2026-09-25 19:04:50,688 INFO run_e0: ==== E0 step: offset ====
+2026-09-25 19:05:19,195 INFO run_e0: Clock offset estimate: 0.0 s (peak share 98.45%, 148809 pairs). Top: [(0.0, 146503), (254.0, 13), (-5519.0, 10), (-356.0, 9), (-131.0, 8)]
+2026-09-25 19:05:19,195 INFO run_e0: If the peak is clear and not 0, set matching.clock_offset_s to it before `match`.
+$ run_e0.py match
+2026-09-25 19:05:20,392 INFO run_e0: ==== E0 step: match ====
+2026-09-25 19:07:47,322 INFO run_e0: Match: 73.13% matched, 0.00% ambiguous
+$ run_e0.py check
+2026-09-25 19:07:51,325 INFO run_e0: ==== E0 step: check ====
+2026-09-25 19:11:47,230 INFO run_e0: Matching gate: FAIL (15 checks judged)
+2026-09-25 19:11:47,230 INFO run_e0:   match_rate: 0.7312958539263636 (threshold 0.8) -> False
+2026-09-25 19:11:47,230 INFO run_e0:   ambiguous_rate: 0.0 (threshold 0.05) -> True
+2026-09-25 19:11:47,230 INFO run_e0:   row_coverage[backdoor]: 0.7003361437152147 (threshold 0.8) -> False
+2026-09-25 19:11:47,230 INFO run_e0:   row_coverage[ddos]: 0.9631295742930146 (threshold 0.8) -> True
+2026-09-25 19:11:47,230 INFO run_e0:   row_coverage[dos]: 0.06109265390424398 (threshold 0.8) -> False
+2026-09-25 19:11:47,230 INFO run_e0:   row_coverage[injection]: 0.9963026061088753 (threshold 0.8) -> True
+2026-09-25 19:11:47,230 INFO run_e0:   row_coverage[mitm]: 0.9012345679012346 (threshold 0.8) -> True
+2026-09-25 19:11:47,230 INFO run_e0:   row_coverage[normal]: 0.4597679377570378 (threshold 0.8) -> False
+2026-09-25 19:11:47,230 INFO run_e0:   row_coverage[password]: 0.9027673434194418 (threshold 0.8) -> True
+2026-09-25 19:11:47,230 INFO run_e0:   row_coverage[ransomware]: 0.03730513014216057 (threshold 0.8) -> False
+2026-09-25 19:11:47,230 INFO run_e0:   row_coverage[scanning]: 0.47059501321592057 (threshold 0.8) -> False
+2026-09-25 19:11:47,231 INFO run_e0:   row_coverage[xss]: 0.9637740904874781 (threshold 0.8) -> True
+2026-09-25 19:11:47,231 INFO run_e0:   signature_agreement[sqli]: 0.9988468109339408 (threshold 0.9) -> True
+2026-09-25 19:11:47,231 INFO run_e0:   signature_agreement[cmd_injection]: 0.18181818181818182 (threshold 0.9) -> False
+2026-09-25 19:11:47,231 INFO run_e0:   signature_agreement[xss]: 0.9985668976858921 (threshold 0.9) -> True
+$ run_e0.py payload
+2026-09-25 19:11:50,421 INFO run_e0: ==== E0 step: payload ====
+2026-09-25 19:17:39,246 INFO run_e0: 3,986,497 labelled flows, has_payload rate 24.05%
+2026-09-25 19:17:39,246 INFO run_e0: Payload-dependent classes ['injection', 'xss', 'password']: has_payload rates {'password': 0.746, 'xss': 0.715, 'injection': 0.84}. Automatic check (every payload-dependent class > 20% has_payload): PASS. The final payload-usable decision is the researcher's; record it here before GPU work.
+$ run_e0.py split
+2026-09-25 19:17:43,717 INFO run_e0: ==== E0 step: split ====
+2026-09-25 19:18:05,976 INFO run_e0: Split: 195,141 flows, test fraction 26.85%, ok=True
+$ run_e0.py kappa
+2026-09-25 19:18:07,409 INFO run_e0: ==== E0 step: kappa ====
+2026-09-25 19:19:03,108 INFO run_e0: shares_host density per client (alpha=0.3):
+       mean_degree  saturated_rate  isolated_rate
+kappa                                            
+2         1.902446        0.912338       0.009891
+5         4.780037        0.847032       0.000982
+10        9.632639        0.850315       0.000785
+20       19.264944        0.824497       0.000745
+50       47.715007        0.777741       0.000745
+none   1331.007254        0.000000       0.000745
+2026-09-25 19:19:03,108 INFO run_e0: Pick the smallest kappa before saturation climbs steeply; set graph.shares_host.kappa.
+{
+  "seed": 0,
+  "flows_selected": 195141,
+  "blocks_selected": 125,
+  "blocks_train": 93,
+  "blocks_test": 32,
+  "test_fraction_realised": 0.268518660865733,
+  "rare_class_floor": {
+    "mitm": {
+      "blocks_added": 16,
+      "final_count": 300,
+      "floor_met": true
+    },
+    "ransomware": {
+      "blocks_added": 5,
+      "final_count": 432,
+      "floor_met": true,
+      "blocks_holding_class": 8,
+      "min_blocks_met": true
+    },
+    "injection": {
+      "blocks_added": 5,
+      "final_count": 5529,
+      "floor_met": true,
+      "blocks_holding_class": 8,
+      "min_blocks_met": true
+    },
+    "password": {
+      "blocks_added": 2,
+      "final_count": 11737,
+      "floor_met": true,
+      "blocks_holding_class": 8,
+      "min_blocks_met": true
+    },
+    "scanning": {
+      "blocks_added": 6,
+      "final_count": 10798,
+      "floor_met": true,
+      "blocks_holding_class": 8,
+      "min_blocks_met": true
+    },
+    "xss": {
+      "blocks_added": 6,
+      "final_count": 35395,
+      "floor_met": true,
+      "blocks_holding_class": 8,
+      "min_blocks_met": true
+    }
+  },
+  "class_counts": {
+    "backdoor": {
+      "test": 2896,
+      "train": 11222
+    },
+    "ddos": {
+      "test": 16118,
+      "train": 31905
+    },
+    "dos": {
+      "test": 13676,
+      "train": 45543
+    },
+    "injection": {
+      "test": 1638,
+      "train": 3891
+    },
+    "mitm": {
+      "test": 61,
+      "train": 239
+    },
+    "normal": {
+      "test": 3031,
+      "train": 6559
+    },
+    "password": {
+      "test": 4609,
+      "train": 7128
+    },
+    "ransomware": {
+      "test": 235,
+      "train": 197
+    },
+    "scanning": {
+      "test": 2929,
+      "train": 7869
+    },
+    "xss": {
+      "test": 7206,
+      "train": 28189
+    }
+  },
+  "block_overlap_train_test": 0,
+  "problems": [],
+  "split_ok": true
+}
+flows.parquet: 3,986,497 rows, 76 columns
+payloads.parquet: 3,312,380 segments
+payloads.parquet matches flows_labeled.payload_texts for 958,846 flows
+4.0K	/kaggle/working/release_v2/manifest.json
+217M	/kaggle/working/release_v2/payloads.parquet
+110M	/kaggle/working/release_v2/e0
+22M	/kaggle/working/release_v2/splits
+4.0K	/kaggle/working/release_v2/resolved_config.yaml
+388M	/kaggle/working/release_v2/flows.parquet
+4.0K	/kaggle/working/release_v2/README.md
+
+https://huggingface.co/datasets/mtasfi/toniot-fhf-processed (private, tag v2)
+/usr/local/lib/python3.12/dist-packages/mistune.py:435: SyntaxWarning: invalid escape sequence '\|'
+  cells[i][c] = re.sub('\\\\\|', '|', cell)
+/usr/local/lib/python3.12/dist-packages/nbconvert/filters/filter_links.py:36: SyntaxWarning: invalid escape sequence '\_'
+  text = re.sub(r'_', '\_', text) # Escape underscores in display text
+[NbConvertApp] Converting notebook __notebook__.ipynb to notebook
+[NbConvertApp] Writing 113392 bytes to __notebook__.ipynb
+[NbConvertApp] Converting notebook __notebook__.ipynb to html
+[NbConvertApp] Writing 438764 bytes to __results__.html

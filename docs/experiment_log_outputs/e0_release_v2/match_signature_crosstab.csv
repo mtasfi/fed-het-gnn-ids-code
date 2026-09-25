@@ -1,0 +1,4 @@
+signature,expected_label,flows_hit,matched,unmatched,agreement,label_injection,label_ddos,label_scanning,label_xss,label_normal
+sqli,injection,70353,70240,113,0.9988468109339408,70159,65,11,4,1
+cmd_injection,injection,51,22,29,0.18181818181818182,4,10,7,0,1
+xss,xss,85691,85130,561,0.9985668976858921,22,0,100,85008,0

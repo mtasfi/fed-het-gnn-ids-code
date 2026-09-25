@@ -1,0 +1,15 @@
+{
+  "flows": 5451278,
+  "matched": 3986497,
+  "match_rate": 0.7312958539263636,
+  "ambiguous_rate": 0.0,
+  "no_label_rate": 0.2687041460736363,
+  "row_shared_flows": 1154980,
+  "status_counts": {
+    "matched": 2612393,
+    "no_label_row": 1464781,
+    "matched_consistent": 1374104
+  },
+  "abs_dt_p50": 0.24981093406677246,
+  "abs_dt_p99": 0.4949510097503662
+}

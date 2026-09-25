@@ -1,0 +1,121 @@
+{
+  "release": "v2",
+  "code_commit": "8a105fc7f5d4ac5555fe6fad6e593b47fd97b2b3",
+  "dataset": "toniot",
+  "smoke": false,
+  "source": {
+    "hf_repo": "mtasfi/ton-iot-with-pcap-payload",
+    "revision": "main"
+  },
+  "capture_files": [
+    "MITM_normal1.pcap",
+    "MITM_normal4.pcap",
+    "injection_normal1.pcap",
+    "injection_normal4.pcap",
+    "normal_DDoS_1.pcap",
+    "normal_DDoS_12.pcap",
+    "normal_DDoS_4.pcap",
+    "normal_DoS_1.pcap",
+    "normal_DoS_5.pcap",
+    "normal_XSS4.pcap",
+    "normal_XSS6.pcap",
+    "normal_backdoor.pcap",
+    "normal_runsomware1.pcap",
+    "normal_runsomware2.pcap",
+    "normal_scanning1.pcap",
+    "normal_scanning6.pcap",
+    "password_normal1.pcap",
+    "password_normal5.pcap"
+  ],
+  "label_files": [
+    "Network_dataset_1.csv",
+    "Network_dataset_10.csv",
+    "Network_dataset_11.csv",
+    "Network_dataset_12.csv",
+    "Network_dataset_13.csv",
+    "Network_dataset_14.csv",
+    "Network_dataset_15.csv",
+    "Network_dataset_16.csv",
+    "Network_dataset_17.csv",
+    "Network_dataset_18.csv",
+    "Network_dataset_19.csv",
+    "Network_dataset_2.csv",
+    "Network_dataset_20.csv",
+    "Network_dataset_21.csv",
+    "Network_dataset_22.csv",
+    "Network_dataset_23.csv",
+    "Network_dataset_3.csv",
+    "Network_dataset_4.csv",
+    "Network_dataset_5.csv",
+    "Network_dataset_6.csv",
+    "Network_dataset_7.csv",
+    "Network_dataset_8.csv",
+    "Network_dataset_9.csv"
+  ],
+  "flows": 3986497,
+  "payload_segments": 3312380,
+  "per_class": [
+    {
+      "label": "backdoor",
+      "flows": 508117,
+      "has_payload": 0,
+      "has_payload_rate": 0.0
+    },
+    {
+      "label": "ddos",
+      "flows": 1067502,
+      "has_payload": 46003,
+      "has_payload_rate": 0.0431
+    },
+    {
+      "label": "dos",
+      "flows": 871099,
+      "has_payload": 88,
+      "has_payload_rate": 0.0001
+    },
+    {
+      "label": "injection",
+      "flows": 188892,
+      "has_payload": 158639,
+      "has_payload_rate": 0.8398
+    },
+    {
+      "label": "mitm",
+      "flows": 438,
+      "has_payload": 21,
+      "has_payload_rate": 0.0479
+    },
+    {
+      "label": "normal",
+      "flows": 167988,
+      "has_payload": 77921,
+      "has_payload_rate": 0.4638
+    },
+    {
+      "label": "password",
+      "flows": 496281,
+      "has_payload": 370153,
+      "has_payload_rate": 0.7459
+    },
+    {
+      "label": "ransomware",
+      "flows": 5160,
+      "has_payload": 1,
+      "has_payload_rate": 0.0002
+    },
+    {
+      "label": "scanning",
+      "flows": 269554,
+      "has_payload": 11995,
+      "has_payload_rate": 0.0445
+    },
+    {
+      "label": "xss",
+      "flows": 411466,
+      "has_payload": 294025,
+      "has_payload_rate": 0.7146
+    }
+  ],
+  "locked": {},
+  "split_ok": true
+}

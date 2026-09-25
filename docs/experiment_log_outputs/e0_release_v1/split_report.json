@@ -1,0 +1,77 @@
+{
+  "seed": 0,
+  "flows_selected": 241814,
+  "blocks_selected": 17,
+  "blocks_train": 7,
+  "blocks_test": 10,
+  "test_fraction_realised": 0.232257023993648,
+  "rare_class_floor": {
+    "dos": {
+      "blocks_added": 1,
+      "final_count": 15213,
+      "floor_met": true
+    },
+    "injection": {
+      "blocks_added": 1,
+      "final_count": 14338,
+      "floor_met": true
+    },
+    "mitm": {
+      "blocks_added": 6,
+      "final_count": 314,
+      "floor_met": true
+    },
+    "scanning": {
+      "blocks_added": 1,
+      "final_count": 123772,
+      "floor_met": true
+    }
+  },
+  "class_counts": {
+    "backdoor": {
+      "test": 4000,
+      "train": 2004
+    },
+    "ddos": {
+      "test": 27616,
+      "train": 0
+    },
+    "dos": {
+      "test": 0,
+      "train": 15213
+    },
+    "injection": {
+      "test": 14338,
+      "train": 0
+    },
+    "mitm": {
+      "test": 109,
+      "train": 205
+    },
+    "normal": {
+      "test": 5251,
+      "train": 4284
+    },
+    "password": {
+      "test": 4849,
+      "train": 14842
+    },
+    "scanning": {
+      "test": 0,
+      "train": 123772
+    },
+    "xss": {
+      "test": 0,
+      "train": 25331
+    }
+  },
+  "block_overlap_train_test": 0,
+  "problems": [
+    "class 'ddos' has no training flows",
+    "class 'dos' has 0 test flows (< 20)",
+    "class 'injection' has no training flows",
+    "class 'scanning' has 0 test flows (< 20)",
+    "class 'xss' has 0 test flows (< 20)"
+  ],
+  "split_ok": false
+}
