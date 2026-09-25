@@ -78,8 +78,15 @@ split:
 partition:
   num_clients: 5
   alpha_candidates: [0.3, 0.5, 1.0]   # E0 materialises all of these + IID
-  alpha: null                # LOCK IN E0: primary alpha used by E1 and all ablations
-  alpha_sweep: null          # LOCK IN E0: the two values for E5, e.g. [0.3, 1.0]
+  # Locked from E0 on release v2 (client_class_distribution_alpha=*.csv). Why these:
+  #   0.5: every client holds 5-7 of the 10 classes and every class sits on 2-5 clients,
+  #        so training is clearly non-IID yet each class is learnable by more than one
+  #        client and worst-client macro-F1 stays meaningful.
+  #   0.3 / 1.0 for E5: the two neighbours of the primary value; at 1.0 ransomware
+  #        sits on a single client, at 0.3 one client holds 9 classes and another 4,
+  #        which gives the sweep a real contrast. (IID is materialised too.)
+  alpha: 0.5                 # LOCKED IN E0: primary alpha used by E1 and all ablations
+  alpha_sweep: [0.3, 1.0]    # LOCKED IN E0: the two values for E5
 
 features:
   log1p: true                # per-value transform before scaling; needs no statistics
@@ -125,7 +132,13 @@ graph:
   homogeneous: false         # A4 sets true
   shares_host:
     window_s: 60             # Δt
-    kappa: null              # LOCK IN E0: neighbour cap per flow
+    # Locked from E0 on release v2 (e0/kappa_stats.csv, mean over the alpha=0.3 clients).
+    # Uncapped, a flow has ~1,331 same-host neighbours within 60 s, so a cap is required.
+    # Saturation stays high at every cap (0.91 at 2, 0.85 at 10, 0.78 at 50): there is no
+    # knee to read off, so the cap is set by cost. 10 gives ~4.8 undirected edges per flow
+    # (~1 M edges for the 195 k selected flows), which fits a T4 with full-graph forward;
+    # 20 doubles the edges for a neighbourhood that is already saturated.
+    kappa: 10                # LOCKED IN E0: neighbour cap per flow
 
 gnn:
   hidden_dim: 128            # d_h

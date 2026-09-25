@@ -10,7 +10,11 @@ plus one IID reference, plus per-client grouped validation.
 * IID reference: blocks go to clients uniformly at random.
 * Validation: per client, its LATEST training blocks (by block start time) until
   >= val_fraction of that client's training flows; at least one block stays in
-  training. Blocks are never cut.
+  training. Blocks are never cut. A block is skipped (stays in training) if moving
+  it would remove the client's last training flows of a class (v1.3): on ToN-IoT
+  the MITM captures are the last day of the recording, so "latest blocks" sent
+  every MITM training flow to validation at every alpha and no client could learn
+  the class.
 Partitions are seed-stable and stored as files; runs read them, never recompute.
 """
 
@@ -55,15 +59,21 @@ def partition(split_df: pd.DataFrame, num_clients: int, alpha: Union[float, str]
     out['role'] = out['split']
 
     for client in range(num_clients):
-        blocks = out[(out.client == client) & (out.split == 'train')].groupby('block_id').agg(
+        mine = out[(out.client == client) & (out.split == 'train')]
+        blocks = mine.groupby('block_id').agg(
             start=('first_ts', 'min'), n=('flow_uid', 'size')).sort_values('start', ascending=False)
+        per_block = mine.groupby(['block_id', 'label']).size().unstack(fill_value=0)
+        left = per_block.sum(axis=0)                        # client's training flows per class
         need = val_fraction * blocks['n'].sum()
         taken = 0
         val_blocks = []
         for block, row in blocks.iloc[:-1].iterrows():      # keep the earliest block for training
             if taken >= need:
                 break
+            if ((left - per_block.loc[block]) <= 0)[per_block.loc[block] > 0].any():
+                continue                                    # would empty a class from training
             val_blocks.append(block)
+            left -= per_block.loc[block]
             taken += int(row['n'])
         out.loc[out['block_id'].isin(val_blocks), 'role'] = 'val'
 

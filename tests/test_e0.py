@@ -208,6 +208,21 @@ def test_split_block_count_floor_spreads_a_one_block_class(cfg):
     assert split.groupby('block_id')['split'].nunique().max() == 1
 
 
+def test_validation_never_empties_a_class_from_training():
+    """A class that only occurs in a client's latest blocks must keep training flows."""
+    rows = []
+    for b in range(10):                                   # early normal blocks
+        rows += [('normal', f'n{b}', 'train', b * 100.0 + i) for i in range(20)]
+    for b in range(2):                                    # the latest blocks hold the only mitm flows
+        rows += [('mitm', f'm{b}', 'train', 5000.0 + b * 100.0 + i) for i in range(20)]
+    df = pd.DataFrame(rows, columns=['label', 'block_id', 'split', 'first_ts'])
+    df['flow_uid'] = [f'u{i}' for i in range(len(df))]
+    part, _ = partition(df, 1, 'iid', 0.2, seed=0)
+    train = part[part.role == 'train']
+    assert (train.label == 'mitm').any()
+    assert (part.role == 'val').any()
+
+
 # ------------------------------------------------------------------ scaler / weights / metrics
 def test_federated_scaler_equals_central():
     rng = np.random.default_rng(0)

@@ -50,19 +50,34 @@ of 60/30 s × 4/8 blocks passed, with the partition drawable at α = 0.3, 0.5 an
 **Known side effect:** block sizes stay uneven, so scanning dominates the test set by flow count.
 Macro-F1 (the headline) is unaffected; accuracy is reported but not used as the headline.
 
-## E0 on the PCAP release: extraction and label coverage
+## E0 on the PCAP release (release v2): extraction, labels, decisions
 
-- **`flow_extractor.continuity = per_file`** for the Hugging Face PCAP release. Its 18 captures are
-  different scenarios in one flat folder; `per_directory` (meant for rotated files of one capture) read
-  them as a single stream in file-name order under one `capture_id`.
-- **Ransomware is dropped.** The available `Network_dataset_*.csv` files (2–10, 12–21, 23) have no
-  ransomware rows, so no flow can carry that label. `Network_dataset_1`, `11` and `22` are not in the
-  release. The two ransomware captures are kept; their flows match other labels or stay unmatched.
-- **Match rate is below the 0.80 gate (49 %).** Unmatched flows are mostly sub-second TCP resets and idle
-  flows whose 5-tuple is absent from the label CSVs. Matched flows are reliable: SQL-injection and XSS
-  signatures agree with the label for 99.7 % and 99.9 % of matched hits, and the clock offset is 0 s. The
-  per-class row coverage check does not apply here, because the release holds only some of the
-  captures that were recording at the same time. Only matched flows are used.
-- **Payload-free classes are expected.** DoS, DDoS, scanning and backdoor carry almost no readable
-  payload (0–6 %). They are detected from flow statistics and `shares_host` edges with `m_i = 0`; the
-  payload-dependent classes (injection, XSS, password) keep 71–79 % `has_payload`.
+Inputs: 18 captures and all 23 `Network_dataset_*.csv` files from the Hugging Face release
+(`mtasfi/ton-iot-with-pcap-payload`); output: `mtasfi/toniot-fhf-processed`, tag `v2`.
+
+- **`flow_extractor.continuity = per_file`.** The captures are different scenarios in one flat folder;
+  `per_directory` (meant for rotated files of one capture) had read them as a single stream in file-name
+  order under one `capture_id`.
+- **Matching:** 73.1 % of extracted flows matched a label row (0 % ambiguous), clock offset 0 s. SQL-injection
+  and XSS signatures agree with the label for 99.9 % of matched hits. The 0.80 match-rate gate and the
+  per-class row-coverage gate fail and are accepted: the release holds only some of the captures that were
+  recording at the same time, so label rows from the missing captures lower both numbers without saying
+  anything about the flows we have. Only matched flows are used.
+- **Classes:** all ten classes are present (3.99 M labelled flows). Ransomware (5,160) and MITM (438) are small
+  and kept.
+- **Payload-free classes are expected.** DoS, backdoor, ransomware, DDoS and scanning carry almost no readable
+  payload (0–4 %). They are detected from flow statistics and `shares_host` edges with `m_i = 0`; the
+  payload-dependent classes keep 75 % (password), 72 % (XSS) and 84 % (injection) `has_payload`.
+- **Validation never empties a class from a client's training data.** Validation takes each client's latest
+  blocks. The MITM captures are the last day of the recording, so every MITM training flow went to validation
+  at every α and no client could learn the class. A block now stays in training if moving it would remove the
+  client's last training flows of a class (`fhf/data/partition_clients.py`).
+- **α = 0.5 (primary), E5 sweep [0.3, 1.0].** At 0.5 every client holds 5–7 classes and every class sits on
+  2–5 clients. 0.3 and 1.0 are its neighbours and give the sweep real contrast (at 1.0 ransomware sits on one
+  client).
+- **κ = 10.** Uncapped, a flow has ~1,331 same-host neighbours within 60 s. Saturation stays high at every cap
+  (0.91 at 2, 0.85 at 10, 0.78 at 50), so there is no knee; the cap is set by cost. κ = 10 gives ~4.8 edges
+  per flow, which fits a T4 with a full-graph forward.
+- **Split (60 s, ≥ 8 blocks per class, 150 k target):** 195,141 flows in 125 blocks, test fraction 26.9 %,
+  every class has train and test flows.
+- **B2 is not rerun** in this sprint (owner's decision); the NF-ToN-IoT reproduction stays as the reference.

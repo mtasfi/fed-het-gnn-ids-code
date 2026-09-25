@@ -161,6 +161,11 @@ def summary():
 
 # ---------------------------------------------------------------- queue
 restore_release()
+# Rebuild splits/partitions with the checked-out code (~1 min, seeded, so train/test is
+# identical to the release): the release's splits/ predate the v1.3 validation rule.
+if not os.path.exists(f"{WORK}/{DATASET}/splits/.resplit_{COMMIT[:10]}"):
+    assert run("experiments/run_e0.py", "split", "--dataset", DATASET) == 0, "E0 split failed"
+    open(f"{WORK}/{DATASET}/splits/.resplit_{COMMIT[:10]}", "w").close()
 pull_state()
 results = {}
 for exp in QUEUE:
