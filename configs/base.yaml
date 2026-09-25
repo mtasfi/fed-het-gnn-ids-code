@@ -179,6 +179,6 @@ tracking:
   # Only scalar metrics, config values and tags are sent. Never payload text,
   # payload samples, IP addresses or any per-flow data.
   comet: true
-  api_key: emuhTVn5AAwEm9ALtwsL4SkUo
+  api_key: null             # never in the repo (it is public): set COMET_API_KEY (env or Kaggle Secret)
   project: fedhetformer-ids
   workspace: null

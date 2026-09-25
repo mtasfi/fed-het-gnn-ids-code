@@ -11,6 +11,7 @@ Rules (plan §5 + data-localisation claim):
 
 import logging
 import math
+import os
 import re
 from typing import Dict, Iterable, List, Optional
 
@@ -132,6 +133,14 @@ def standard_tags(cfg) -> List[str]:
     return tags
 
 
+def _kaggle_secret(name: str):
+    try:
+        from kaggle_secrets import UserSecretsClient
+        return UserSecretsClient().get_secret(name)
+    except Exception:
+        return None
+
+
 def init_tracker(cfg, run_name: str, extra_tags: Iterable[str] = ()) -> Tracker:
     tcfg = cfg.get('tracking', {})
     if not tcfg.get('comet', False):
@@ -165,7 +174,11 @@ def init_tracker(cfg, run_name: str, extra_tags: Iterable[str] = ()) -> Tracker:
             auto_histogram_gradient_logging=False,
             auto_histogram_activation_logging=False,
         )
-        exp = comet_ml.start(api_key=tcfg['api_key'], experiment_config=exp_config, **kwargs)
+        api_key = tcfg.get('api_key') or os.environ.get('COMET_API_KEY') or _kaggle_secret('COMET_API_KEY')
+        if not api_key:
+            logger.warning("Comet enabled but no COMET_API_KEY (env or Kaggle Secret); CSV records only")
+            return Tracker(None)
+        exp = comet_ml.start(api_key=api_key, experiment_config=exp_config, **kwargs)
         tracker = Tracker(exp)
         tracker.add_tags(list(standard_tags(cfg)) + list(extra_tags))
         logger.info(f"Comet mirror: project '{kwargs['project_name']}', run '{run_name}'")
