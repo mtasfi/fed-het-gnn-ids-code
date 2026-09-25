@@ -69,7 +69,7 @@ sys.path.insert(0, CODE)
 print("code @", COMMIT[:10], flush=True)
 sh("pip uninstall -q -y torchao", check=False)   # breaks peft's LoRA dispatch on Kaggle images
 sh('pip install -q "transformers>=4.48" "peft>=0.13" torch_geometric dpkt comet_ml imbalanced-learn '
-   'tabulate xgboost pyarrow huggingface_hub')
+   'tabulate xgboost pyarrow huggingface_hub pytest')
 sh("nvidia-smi -L", check=False)
 
 from huggingface_hub import HfApi, snapshot_download
@@ -160,6 +160,8 @@ def summary():
 
 
 # ---------------------------------------------------------------- queue
+# E0 unit tests of this checkout (synthetic data, ~1 min): a broken split rule must not reach a run
+assert subprocess.run([sys.executable, "-m", "pytest", "-q", "tests/test_e0.py"]).returncode == 0, "tests failed"
 restore_release()
 # Rebuild splits/partitions with the checked-out code (~1 min, seeded, so train/test is
 # identical to the release): the release's splits/ predate the v1.3 validation rule.
