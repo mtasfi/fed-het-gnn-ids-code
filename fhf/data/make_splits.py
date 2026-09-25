@@ -9,7 +9,15 @@ test support).
 1. Selection (sprint scale): shuffle blocks with a fixed seed, add whole blocks
    until >= target_flows; then, for every class below rare_class_floor, add the
    unselected blocks richest in that class until the floor is met or blocks run
-   out. The final count may exceed the target; rows are never sampled.
+   out; then, for every class held by fewer than min_blocks_per_class selected
+   blocks, add random unselected blocks holding it until it reaches that count.
+   The final count may exceed the target; rows are never sampled.
+   Why the block count (v1.3): on ToN-IoT each attack lives in one to three
+   captures and one busy 60 s block can hold ~100k scanning flows. The flow floor
+   alone was then met by a single block, which had to stay in training (step 2
+   keeps one block per class there), so the class had no test flows and the
+   Dirichlet partition could not spread it over clients. A block-count floor gives
+   every class enough blocks for test, training and several clients.
 2. Train/test: classes are visited rarest first; blocks holding the class are
    moved to test until that class reaches test_fraction of its selected flows;
    remaining blocks fill the overall test_fraction; the rest is train.
@@ -36,7 +44,8 @@ def _block_class_counts(df: pd.DataFrame) -> pd.DataFrame:
     return df.groupby(['block_id', 'label']).size().unstack(fill_value=0)
 
 
-def select_blocks(df: pd.DataFrame, target: int, floor: int, rng: np.random.Generator) -> Tuple[set, Dict]:
+def select_blocks(df: pd.DataFrame, target: int, floor: int, rng: np.random.Generator,
+                  min_blocks: int = 1) -> Tuple[set, Dict]:
     bc = _block_class_counts(df)
     sizes = bc.sum(axis=1)
     order = rng.permutation(bc.index.to_numpy())
@@ -63,6 +72,22 @@ def select_blocks(df: pd.DataFrame, target: int, floor: int, rng: np.random.Gene
             have += int(count)
             added += 1
         added_for_floor[cls] = {'blocks_added': added, 'final_count': have, 'floor_met': have >= floor}
+
+    # block-count floor (see module docstring): random blocks, so no single capture
+    # window dominates the added support
+    for cls in bc.columns:
+        held = [b for b in selected if bc.at[b, cls] > 0]
+        if len(held) >= min_blocks:
+            continue
+        candidates = [b for b in rng.permutation(bc.index[bc[cls] > 0].to_numpy()) if b not in selected]
+        added = candidates[:min_blocks - len(held)]
+        selected.update(added)
+        entry = added_for_floor.setdefault(cls, {'blocks_added': 0, 'final_count': int(bc.loc[held, cls].sum()),
+                                                 'floor_met': True})
+        entry['blocks_added'] += len(added)
+        entry['final_count'] += int(bc.loc[added, cls].sum()) if added else 0
+        entry['blocks_holding_class'] = len(held) + len(added)
+        entry['min_blocks_met'] = len(held) + len(added) >= min_blocks
     return selected, added_for_floor
 
 
@@ -108,7 +133,8 @@ def make_split(labeled: pd.DataFrame, cfg, seed: int = 0) -> Tuple[pd.DataFrame,
     df = labeled[['flow_uid', 'capture_id', 'first_ts', 'label']].copy()
     df['block_id'] = assign_blocks(df, float(s.block_seconds))
 
-    selected, floor_report = select_blocks(df, int(s.target_flows), int(s.rare_class_floor), rng)
+    selected, floor_report = select_blocks(df, int(s.target_flows), int(s.rare_class_floor), rng,
+                                           int(s.get('min_blocks_per_class', 1)))
     df = df[df['block_id'].isin(selected)].copy()
     assignment = train_test_blocks(df, float(s.test_fraction), rng)
     df['split'] = df['block_id'].map(assignment)

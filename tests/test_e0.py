@@ -185,6 +185,29 @@ def test_split_blocks_never_cross_and_partition_is_stable(cfg):
     assert sorted(p1.client.unique()) == [0, 1, 2, 3, 4]
 
 
+def test_split_block_count_floor_spreads_a_one_block_class(cfg):
+    """A class whose flows are all in one huge block plus a few small ones must end up
+    with >= min_blocks_per_class blocks, so it has both test and training flows."""
+    rows = []
+    for b in range(40):                                   # background: 40 normal blocks
+        rows += [('normal', f'n{b}', b * 60.0 + i * 0.1) for i in range(50)]
+    rows += [('scanning', 'big', 5000.0 + i * 0.001) for i in range(5000)]        # one huge block
+    for b in range(6):                                    # six small scanning blocks elsewhere
+        rows += [('scanning', f's{b}', 9000.0 + b * 60.0 + i * 0.1) for i in range(30)]
+    df = pd.DataFrame(rows, columns=['label', 'capture_id', 'first_ts'])
+    df['flow_uid'] = [f'u{i}' for i in range(len(df))]
+    cfg.split.block_seconds = 60
+    cfg.split.target_flows = 500
+    cfg.split.rare_class_floor = 300
+    cfg.split.min_test_per_class = 5
+
+    cfg.split.min_blocks_per_class = 4
+    split, new = make_split(df, cfg, seed=0)
+    assert new['split_ok'], new['problems']
+    assert split[split.label == 'scanning']['block_id'].nunique() >= 4
+    assert split.groupby('block_id')['split'].nunique().max() == 1
+
+
 # ------------------------------------------------------------------ scaler / weights / metrics
 def test_federated_scaler_equals_central():
     rng = np.random.default_rng(0)
