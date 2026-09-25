@@ -146,7 +146,12 @@ gnn:
   dropout: 0.2
 
 phase2:
-  rounds: 10                 # R2 (sprint)
+  # v1.3: 10 -> 20 (the plan's full-scale R2). With 10, validation macro-F1 of E1 (both seeds)
+  # and B1 was still rising at the last round and the best round was always the last, so the
+  # federated models were under-trained. A Phase-2 round costs ~6 s, so 20 adds ~1 min per run;
+  # every federated Phase-2 model (E1, E5, B1, B3, A1-A9) uses the same budget. Phase 1 (R1 = 5)
+  # is unchanged, and its cache tag does not include R2, so E1's Phase 1 is reused.
+  rounds: 20                 # R2
   local_epochs: 2            # E2
   lr: 1.0e-3
   weight_decay: 5.0e-4

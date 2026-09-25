@@ -81,3 +81,13 @@ Inputs: 18 captures and all 23 `Network_dataset_*.csv` files from the Hugging Fa
 - **Split (60 s, ≥ 8 blocks per class, 150 k target):** 195,141 flows in 125 blocks, test fraction 26.9 %,
   every class has train and test flows.
 - **B2 is not rerun** in this sprint (owner's decision); the NF-ToN-IoT reproduction stays as the reference.
+
+## Phase-2 rounds: R2 = 20 (was 10 in the sprint)
+
+With R2 = 10, the validation macro-F1 of E1 (seeds 0 and 1) and of B1 was still rising at round 10,
+and the selected checkpoint was always the last round: the federated models were under-trained. A
+Phase-2 round costs about 6 s, so the plan's full-scale value R2 = 20 is used for every federated
+Phase-2 model (E1, E5, B1, B3, A1–A9). R1 = 5 is unchanged; Phase-1 checkpoints and embeddings are
+reused (their cache tag does not depend on R2). B1, A1, A2 and E1's Phase 2 were rerun with R2 = 20;
+the R2 = 10 numbers stay in `docs/experiment_log.md`. Decided by me after no objection within 5 minutes
+(owner's standing instruction).
