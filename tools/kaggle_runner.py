@@ -201,8 +201,12 @@ for exp in QUEUE:
                 cmd += ["--set", s_]
             code = subprocess.run(cmd).returncode
         elif isinstance(exp, dict):
-            # {"exp": "A2", "variant": "psens_p1", "alpha": 0.3, "set": ["partition.seed=1"]}
-            args = ["experiments/run.py", "--exp", exp["exp"], "--dataset", DATASET, "--variant", exp["variant"]]
+            # {"exp": "A2", "variant": "psens_p1", "alpha": 0.3, "seed": 1, "set": ["partition.seed=1"]}
+            args = ["experiments/run.py", "--exp", exp["exp"], "--dataset", DATASET]
+            if exp.get("variant"):
+                args += ["--variant", exp["variant"]]
+            if exp.get("seed") is not None:
+                args += ["--seed", str(exp["seed"])]
             if exp.get("alpha") is not None:
                 args += ["--alpha", str(exp["alpha"])]
             for s_ in exp.get("set", []):
