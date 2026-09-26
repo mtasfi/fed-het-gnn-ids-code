@@ -227,6 +227,27 @@ Paired with E1 on the same partition (α = 0.5, p0). Values are macro-F1; Δ is 
 - Federation costs about 2 points (B3).
 - **For the thesis:** the payload and host-context claims are supported. The claim that the *transformer + federated LoRA* beats cheaper payload encoders is not supported at this scale and must be reported as such.
 
+## 11f. Payload-dependent classes (L7): a hashed encoder beats the transformer
+
+Means over 2 seeds, R2 = 20, α = 0.5, p0. L7-F1 is the mean F1 over injection, password and XSS. Source: latest Comet run per name (`comet_latest.py`).
+
+| Run | Injection | Password | XSS | **L7-F1** | Macro-F1 |
+|---|---|---|---|---|---|
+| A2 hashed n-grams | **0.909** | 0.983 | 0.966 | **0.952** | 0.852 |
+| B3 centralised HetGNN | 0.936 | 0.984 | 0.936 | 0.952 | 0.878 |
+| A4 homogeneous | 0.926 | 0.986 | 0.888 | 0.933 | 0.863 |
+| A8 no graph | 0.872 | 0.989 | 0.938 | 0.933 | 0.848 |
+| A5 no `shares_host` | 0.878 | 0.978 | 0.939 | 0.932 | 0.835 |
+| **E1 transformer + LoRA** | **0.747** | 0.984 | 0.965 | **0.898** | 0.858 |
+| A1 no payload | 0.755 | 0.944 | 0.971 | 0.890 | 0.826 |
+| A3 frozen transformer | 0.721 | 0.937 | 0.937 | 0.865 | 0.844 |
+| B1 FedAvg MLP | 0.658 | 0.878 | 0.955 | 0.830 | 0.815 |
+| B5 XGBoost (central, 1 seed) | 0.929 | 0.928 | 0.979 | 0.945 | 0.865 |
+
+- **The payload channel helps:** A1 → A2 raises L7-F1 from 0.890 to 0.952 and injection from 0.755 to 0.909.
+- **The transformer + federated LoRA does not:** E1's injection F1 (0.747) is as low as no payload, and 0.16 below hashed n-grams. E1's macro-F1 edge comes from *normal* (0.83) and ransomware, not from the L7 classes.
+- **Consequence for the thesis:** at this scale (195k flows, R1 = 5, weakly supervised Phase 1), the headline claim must be "payload content and host context help federated detection of application-layer attacks; a cheap hashed payload encoder is at least as good as a federated-LoRA transformer". The transformer result is a negative finding to report and discuss (likely causes: short Phase 1, flow-level weak labels on segments, only ~100k readable segments).
+
 ## 12. Thesis repo sync
 
 - PR #3 (new Dataset/Setup/Results chapters) was merged on GitHub. The E0 commit was rebased onto it (`d1e93f5`), and the E0 numbers were filled into `Tab_D_Stats` and "Outcome of the Data Audit". Still open: template overlap and probe timing.
