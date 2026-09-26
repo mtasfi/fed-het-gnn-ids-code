@@ -497,6 +497,28 @@ Reading:
 
 Reading: with equal settings, the centralised flow-only models beat FedGATSage clearly (macro-F1 ≈ 0.71 vs 0.45–0.47). FHF helps the centralised models a little overall (+0.01) and on L7 password/xss (+0.1–0.2 F1). L7 stays the weakest group in every run (F1 ≤ 0.56 except FedGATSage-FHF password 0.75, where FedGATSage fails xss completely). This supersedes the §11q comparison. The test splits differ from §11p's (FedGATSage: ≈10 % random split inside `preprocess_data.py`; centralised: 20 % by flow vector), so single points of difference are noise-level.
 
+## 11s. Why FedGATSage gets xss ≈ 0 while the centralised models do not, and why FHF scores higher (analysis, no training, 2026-09-27)
+
+**Why (owner):** *"xss keno centralised e valo krlo but fed e ekdom 0 hoye gese"* and *"fhf dataset e auto result valo ashe. Eta keno hoy"*: explain directly if certain, else run an experiment.
+
+**1. FedGATSage and xss: the model never sees per-flow fields.** Code in `Fed_GNN` v2:
+- `src/federated_learning.py::_process_to_graph`: nodes are IPs. Node features are the per-IP mean of centrality columns (degree, PageRank, k-core, eigenvector, betweenness, modularity; input_dim = 12). `flow_rate`/`avg_payload` need CIC columns and are absent for NF data.
+- `src/gnn_models.py`: a flow (edge) is classified from `cat([x[src], x[dst]])` only.
+
+So every flow between the same two IPs gets the same input, and the model sees only anonymous centrality numbers, not which IP it is. In the 1500 set, xss comes from 192.168.1.36 (and .35) against 192.168.1.152/.190/.195. The same source attacks with injection, and the same three servers also carry injection, password and scanning. For example, 192.168.1.36→.152 has 465 xss and 134 injection flows, and .190 carries password 721 / scanning 512 / xss 427. By centrality, the xss edges look like injection/password/scanning edges, and all three GATs give xss recall 0.00–0.08. The centralised models use the per-flow NetFlow fields (bytes, packets, flags, duration, port), where xss is largely separable: on the 1500 sets, 93 % (NF) and 95 % (FHF) of xss rows have a flow vector whose majority label is xss.
+
+**2. Why FHF scores higher: its labels are more consistent with the traffic.** "Oracle" = predict each row as the majority label of all rows with the same key (in-sample upper bound, no model). Script and table: [label_consistency_nf_vs_fhf/](experiment_log_outputs/label_consistency_nf_vs_fhf/).
+
+| key | NF full | FHF full | NF 1500 | FHF 1500 |
+|---|---:|---:|---:|---:|
+| flow vector (9 NetFlow fields) | 0.726 | **0.894** | 0.909 | 0.928 |
+| IP pair (src>dst) | 0.728 | **0.817** | 0.775 | 0.818 |
+| flow vector + IP pair | 0.728 | **0.901** | 0.929 | 0.962 |
+
+- In NF-ToN-IoT v1, 27 % of rows carry a label that is outvoted on their exact 9-field flow vector; in FHF, 11 %. The relabel moved rows whose identical flow vectors were split across injection/password/xss/ddos to one label (ToN-IoT's own CSV label for the matched flow), so less label noise, higher ceiling for any model. FHF is "easier" because conflicting labels on identical traffic were resolved, not because of a feature leak: the relabel used only ToN-IoT's label for the matched flow, never model output.
+- Per class on the full data, password and xss have oracle 0.000 in **both** datasets: every password/xss flow vector is outvoted (mostly by injection) at natural class proportions. They become learnable only after balancing (1500 sets: 0.78–0.95). This explains the §11q collapse of password/xss on the natural-mix test.
+- IP pair on the 1500 sets: password 0.61 → 0.88, scanning 0.77 → 0.91, ddos 0.64 → 0.80 (NF → FHF), which is why FedGATSage gains on password/scanning/ddos in §11p. Benign falls 0.94 → 0.79 because the Benign rows moved to ddos share IP pairs with the Benign rows that remain.
+
 ## 12. Thesis repo sync
 
 - PR #3 (new Dataset/Setup/Results chapters) was merged on GitHub. The E0 commit was rebased onto it (`d1e93f5`), and the E0 numbers were filled into `Tab_D_Stats` and "Outcome of the Data Audit". Still open: template overlap and probe timing.
