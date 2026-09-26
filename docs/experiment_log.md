@@ -120,7 +120,27 @@ Metrics from Comet: [`experiment_log_outputs/comet/test_metrics_E1_E5_PROBE.txt`
 - Each E1 seed takes about 2 h, against the planned 2.5 h for both seeds.
 - PROBE is a timing run only; its score is meaningless (1 round).
 
-## 10. Thesis repo sync
+## 10. E1 finished (R2 = 10) and Phase-2 rounds raised to 20
+
+- **E1 at R2 = 10:** seed 0 scored 0.815 and seed 1 0.849, so **0.832 ± 0.023** (worst client 0.626). Averaged over both seeds, injection is 0.835 and password 0.982, above central XGBoost (0.928). MITM is 0.00 / 0.23.
+- **Where the time goes** (runner log): a Phase-1 round takes about 22 min, 5 rounds about 110 min, embedding about 10 min, and a Phase-2 round about 6 s.
+- For both seeds, validation macro-F1 was still rising at Phase-2 round 10, and the best round was the last one (seed 1: 0.81 → 0.92). B1 behaved the same way.
+- **Decision: R2 = 20** (commit `5bf3116`) for every federated Phase-2 model. 20 is the plan's full-scale value, and it adds about 1 min per run. The Phase-1 cache tag does not include R2, so E1 reuses Phase 1 and the embeddings. The owner raised no objection within 5 minutes.
+- Queued with R2 = 20: Runner A (v3) runs E1 (Phase 2 only), then E4, A5, B3, A3, E6, A4, A8, A9, A6. Runner B (v4) runs B1, A1, A2, then E5 (Phase 2 only).
+
+## 11. E5 at R2 = 10: a non-monotonic α trend caused by lumpy blocks
+
+| α | Macro-F1 | Worst client | Injection | Ransomware | Comet |
+|---|---|---|---|---|---|
+| 0.3 | 0.922 | 0.801 | 0.911 | 0.998 | [link](https://www.comet.com/text-films/fedhetformer-ids/60cb656925164f4fb7aba24c0a4dfd72) |
+| 0.5 (E1 mean) | 0.832 | 0.626 | 0.835 | 0.772 | see §9 |
+| 1.0 | **0.665** | 0.432 | **0.000** | **0.033** | [link](https://www.comet.com/text-films/fedhetformer-ids/41593bcdc7b64b6886783ae83f7f0d4e) |
+
+- **Cause:** injection has 8 blocks, but one of them holds about 3.9k of injection's roughly 5.5k training flows. At α = 1.0, every injection training flow sits on client 1, while client 4 holds 611 injection *test* flows and no injection training data. After FedAvg, the global model predicts injection as DDoS (1,250 of 1,638 flows). At α = 0.3, the big block lands on the same client as most of the test flows (0.91). Ransomware behaves the same way. Full outputs: runner-b v3 output `runs/E5/.../alpha=1.0/`.
+- So E5's α trend mostly reflects **which client draws the big block**, not α. Splitting blocks would break the no-cut rule.
+- **Decision:** rerunning E5 with several partition draws is not affordable (Phase 1 takes about 2 h per draw). Instead, a **partition-sensitivity** analysis runs the Phase-1-free models A2 and B1 at α ∈ {0.3, 0.5, 1.0, IID} × partition seeds {0, 1, 2} (24 short runs; runner support in commit `78c3334`). E5 will be reported next to that spread.
+
+## 12. Thesis repo sync
 
 - PR #3 (new Dataset/Setup/Results chapters) was merged on GitHub. The E0 commit was rebased onto it (`d1e93f5`), and the E0 numbers were filled into `Tab_D_Stats` and "Outcome of the Data Audit". Still open: template overlap and probe timing.
 
@@ -130,5 +150,7 @@ Metrics from Comet: [`experiment_log_outputs/comet/test_metrics_E1_E5_PROBE.txt`
 
 | Runner | Queue |
 |---|---|
-| A (after E1) | E4 → A5 → B3 → A3 → E6 → A4 → A8 → A9 → A6 → (A7) → AGG |
-| B (after E5) | spare, or a second α = 0.5 partition draw if the variance is large |
+| A (v3, running) | E1 (Phase 2, R2 = 20) → E4 → A5 → B3 → A3 → E6 → A4 → A8 → A9 → A6 |
+| B (v4, running) | B1 → A1 → A2 → E5 (Phase 2, R2 = 20) |
+| B (next) | partition sensitivity: A2, B1 × α {0.3, 0.5, 1.0, IID} × partition seed {0, 1, 2} |
+| last | (A7) → AGG → thesis Results |
