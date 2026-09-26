@@ -274,6 +274,17 @@ Runner B v6 ran p1 (112 min) and runner A v5 ran p2 (104 min). Phase 1 took 18�
 - p2 is a hard draw for every federated model (≈ 0.61–0.62). The partition draw matters as much as the model.
 - Comet: E1 p1 and p2 are under `E1/toniot/psens_p1|psens_p2/...`.
 
+## 11i. AGG and thesis results (Runner A v6, 09:30)
+
+AGG indexed 58 runs, all completed. The outputs are in [`experiment_log_outputs/agg_results/`](experiment_log_outputs/agg_results/): main, baselines, ablations, per-class, missing sweep, non-IID, partition sensitivity, efficiency, and the LaTeX tables and PDF figures.
+
+- **E4 (masking payloads at test time)**, E1 mean over seeds: 0 % → 0.858, 25 % → 0.849, 50 % → 0.826, **100 % → 0.507**. That is far below A1 (0.826, trained without payloads), because E1 learned to rely on payloads. The thesis states the "graceful degradation" claim only for ≤ 50 % masking.
+- **E6 efficiency:** LoRA Δ has 540,672 parameters and the head W_c 7,690 (0.37 % of the 149.6 M encoder). Phase-1 upload is 2.19 MB per client and round (277× less than full fine-tuning). HetGNN θ has 303,498 parameters, uploading 1.21 MB per round. Phase 1 takes 110 min, embedding 10.2 min (43,561 flows), and Phase 2 116 s for 20 rounds. Latency is 21.7 ms per flow with the encoder and 0.06 ms for the GNN alone.
+- **Why E1 is weak on injection** (confusion matrix): recall 0.91 but precision 0.64. On seed 0, 1,208 DDoS flows (HTTP floods with a readable payload) are predicted as injection. A2 labels them normal instead.
+- **Convergence at R2 = 20:** the best Phase-2 round is 10 (seed 0) and 19 (seed 1); the best Phase-1 round is 4 or 5 of 5.
+
+**Thesis updated** (fed-het-gnn-ids `7e98f56`): Results and Conclusions were rewritten on the measured numbers, all eight Chapter-7 figures were regenerated ([`thesis_figures/make_figs.py`](experiment_log_outputs/thesis_figures/make_figs.py), with inputs `thesis_numbers.json` and `fig_data.json`), the Abstract now carries the main findings, and B2/A7 are marked as not run. There are no `\PH` placeholders left in the chapters.
+
 ## 12. Thesis repo sync
 
 - PR #3 (new Dataset/Setup/Results chapters) was merged on GitHub. The E0 commit was rebased onto it (`d1e93f5`), and the E0 numbers were filled into `Tab_D_Stats` and "Outcome of the Data Audit". Still open: template overlap and probe timing.
@@ -285,5 +296,5 @@ Runner B v6 ran p1 (112 min) and runner A v5 ran p2 (104 min). Phase 1 took 18�
 | Runner | Queue |
 |---|---|
 | A (v4, running) | seed 1 of A1, A2, A4, A5, A6, A8, A9, B1, B3, A3, E4 |
-| A (v6, running) | AGG |
-| last | (A7) → AGG → thesis Results |
+| – | all planned runs done (B2 and A7 not run in the sprint) |
+
