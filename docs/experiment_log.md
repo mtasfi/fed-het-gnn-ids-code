@@ -376,6 +376,30 @@ Same matching as §11l (unique fingerprint matches only).
 - A clean "NF-ToN-IoT ∩ ToN-IoT + payload" subset can therefore train injection, normal and DDoS, but **not XSS or password**. Their NF rows in our captures almost never carry the ToN-IoT label.
 - **Caveat:** the matched rows come mostly from the two injection captures, and the XSS and password captures matched only a few hundred NF rows. NF-ToN-IoT's XSS and password rows from other captures (not in our release) may agree better. The result holds for the 18 captures we have.
 
+## 11n. Seven more XSS/password captures → release v3, and the NF-ToN-IoT match again
+
+**Why (owner):** "My plan is to download more XSS and password PCAPs and extract their payloads" (so that NF-ToN-IoT's XSS/password rows can be matched and get payloads). The owner uploaded 7 captures to HF: `normal_XSS3/5/7/9` and `password_normal2/3/4` (5.4 GB). The owner asked that the old 18 captures not be re-extracted, that the new ones be merged into the existing release, and that runners pick the new data up automatically.
+
+**What we did** (all CPU, no GPU quota):
+1. E0 on only the 7 new captures (build notebook v12, about 45 min): 1,967,981 labelled flows, match 100 %, clock offset 0 s, has_payload password 80 % and XSS 72 %. Staged as `mtasfi/toniot-fhf-processed-extra`, tag `extra7`.
+2. Merge (build notebook v13, [`merge_v3.py`](experiment_log_outputs/merge_v3.py)): v2 + extra7 → **release v3** in `mtasfi/toniot-fhf-processed` (main branch, tag `v3`; **tag `v2` untouched**). It has 5,954,478 flows and 7,864,391 payload segments; 0 duplicate flows across captures. Password now has 1.63 M flows and XSS 1.22 M. There is no `splits/` (runners rebuild them); the E0 reports sit in `e0_v2/` and `e0_extra7/`.
+3. Runner (commit `be64e2a`): `RELEASE_REV = "v3"` by default, with v3 runs in their own state repo `mtasfi/fhf-state-v3`, so they can neither overwrite nor reuse the v2 runs and Phase-1 caches. **Thesis results remain on v2**; v3 splits differ, so v3 numbers are not comparable with them.
+4. NF-ToN-IoT v1 matching repeated against all 25 captures ([log](experiment_log_outputs/nf_label_audit/nftoniot_v1_match_log_v3.txt)).
+
+**Result: the new captures do not solve XSS/password.**
+
+| | 18 captures (v2) | 25 captures (v3) |
+|---|---|---|
+| NF rows with a 5-tuple partner | 78.6 % | 80.5 % |
+| NF rows matched uniquely | 496,553 | 496,362 |
+| XSS: labels agree / + payload | 58 / 1 | 14 / 1 |
+| password: labels agree / + payload | 16 / 0 | 17 / 0 |
+| injection: labels agree / + payload | 185,537 / 157,781 | 185,476 / 157,781 |
+
+- The 7 new captures hold 1.97 M flows but match only about 370 NF rows (XSS3/5/7/9: 31/61/49/49; password2/3/4: 0/0/128). NF-ToN-IoT v1 (1.38 M rows) covers only part of ToN-IoT's traffic, and these captures are largely absent from it.
+- The NF "xss" and "password" rows that do match still come almost entirely from the injection captures, and they carry SQL-injection payloads (XSS signature 0 %). About 72k NF xss and 84k NF password rows match none of the 25 captures, either because they come from captures we do not have or because nProbe cut the flows differently.
+- **Conclusion:** NF-ToN-IoT v1 cannot be given payloads for XSS/password training. The finding for the thesis stays as in §11l/§11m, worded as an inconsistency on the matched subset. The new captures remain useful as data: v3 has 3× more XSS and password flows for any future run.
+
 ## 12. Thesis repo sync
 
 - PR #3 (new Dataset/Setup/Results chapters) was merged on GitHub. The E0 commit was rebased onto it (`d1e93f5`), and the E0 numbers were filled into `Tab_D_Stats` and "Outcome of the Data Audit". Still open: template overlap and probe timing.

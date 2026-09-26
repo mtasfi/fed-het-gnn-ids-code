@@ -1,0 +1,141 @@
+[]
+NF-ToN-IoT v1: 1,379,274 rows
+Attack
+injection     468539
+ddos          326345
+Benign        270279
+password      156299
+xss            99944
+scanning       21467
+dos            17717
+backdoor       17247
+mitm            1295
+ransomware       142
+our labelled flows: 5,954,478
+
+NF rows with a same-direction 5-tuple partner: 1,109,838 (80.5%)
+fingerprint-matched NF rows: 806,905 (58.5%), unique: 496,362 (36.0%)
+label agreement (NF Attack vs our Zeek label) on unique matches: 58.5%
+
+===== PER NF CLASS =====
+            nf_rows  matched_unique  with_payload  match_%  payload_%_of_nf
+Attack                                                                     
+Benign       270279           73397         23720     27.2              8.8
+backdoor      17247             244             0      1.4              0.0
+ddos         326345          110756         48110     33.9             14.7
+dos           17717            8377            19     47.3              0.1
+injection    468539          189256        157973     40.4             33.7
+mitm           1295             482            11     37.2              0.8
+password     156299           72065         62687     46.1             40.1
+ransomware      142               1             0      0.7              0.0
+scanning      21467           13765          8179     64.1             38.1
+xss           99944           28019         25590     28.0             25.6
+
+captures of the matched rows:
+capture_file
+injection_normal1.pcap     262442
+normal_DDoS_4.pcap          99713
+injection_normal4.pcap      89379
+normal_backdoor.pcap        25982
+MITM_normal1.pcap            6323
+normal_DDoS_12.pcap          5493
+normal_DDoS_1.pcap           5162
+normal_scanning6.pcap         750
+MITM_normal4.pcap             172
+password_normal5.pcap         166
+password_normal4.pcap         128
+normal_DoS_5.pcap             114
+password_normal1.pcap          94
+normal_runsomware1.pcap        90
+normal_XSS4.pcap               70
+normal_XSS5.pcap               61
+normal_XSS9.pcap               49
+normal_XSS7.pcap               49
+normal_XSS6.pcap               42
+normal_XSS3.pcap               31
+
+===== CROSSTAB: NF-ToN-IoT label (rows) x our Zeek label (cols), unique matches =====
+label       backdoor   ddos  injection  mitm  normal  password  ransomware  xss
+Attack                                                                         
+Benign             1  29981        688     5   42722         0           0    0
+backdoor         244      0          0     0       0         0           0    0
+ddos               0  61553      49004   199       0         0           0    0
+dos                0   6794       1440   143       0         0           0    0
+injection          0   3746     185476     5       0        15           0   14
+mitm               0     67          9   404       0         2           0    0
+password           0   3660      68385     0       0        17           0    3
+ransomware         0      0          0     0       0         0           1    0
+scanning           0   4358       9379    28       0         0           0    0
+xss                0      0      27991     0       0        14           0   14
+
+===== row-normalised % =====
+label       backdoor  ddos  injection  mitm  normal  password  ransomware  xss
+Attack                                                                        
+Benign           0.0  40.8        0.9   0.0    58.2       0.0         0.0  0.0
+backdoor       100.0   0.0        0.0   0.0     0.0       0.0         0.0  0.0
+ddos             0.0  55.6       44.2   0.2     0.0       0.0         0.0  0.0
+dos              0.0  81.1       17.2   1.7     0.0       0.0         0.0  0.0
+injection        0.0   2.0       98.0   0.0     0.0       0.0         0.0  0.0
+mitm             0.0  13.9        1.9  83.8     0.0       0.4         0.0  0.0
+password         0.0   5.1       94.9   0.0     0.0       0.0         0.0  0.0
+ransomware       0.0   0.0        0.0   0.0     0.0       0.0       100.0  0.0
+scanning         0.0  31.7       68.1   0.2     0.0       0.0         0.0  0.0
+xss              0.0   0.0       99.9   0.0     0.0       0.0         0.0  0.0
+
+===== NF label x capture (xss/password rows) =====
+Attack                    xss  password  injection
+capture_file                                      
+injection_normal1.pcap  16800     55266     138592
+injection_normal4.pcap  11191     13119      46884
+password_normal5.pcap      14        14         14
+normal_XSS3.pcap            4         0          4
+normal_XSS4.pcap            4         2          4
+normal_XSS7.pcap            3         0          3
+normal_XSS9.pcap            2         1          2
+normal_XSS5.pcap            1         0          1
+normal_DoS_1.pcap           0         0          0
+normal_DDoS_4.pcap          0      3352       3397
+normal_DDoS_12.pcap         0       253        300
+normal_DDoS_1.pcap          0        55         49
+MITM_normal1.pcap           0         0          5
+MITM_normal4.pcap           0         0          0
+normal_XSS6.pcap            0         0          0
+  "sqli": txt.str.contains(SQLI).values, "xss_sig": txt.str.contains(XSS).values,
+  "login_form": txt.str.contains(LOGIN).values})
+
+===== PAYLOAD SIGNATURES of matched flows with readable payload, by NF label (%) =====
+           sqli  xss_sig  login_form   flows
+Attack                                      
+Benign      0.0      0.1         0.0   23720
+ddos       48.2      0.0        49.2   48110
+dos         0.0      0.0         0.0      19
+injection  52.1      0.0        23.4  157973
+mitm        0.0      0.0         0.0      11
+password   48.4      0.0        40.3   62687
+scanning   49.8      0.0        29.2    8179
+xss        48.3      0.0        29.2   25590
+
+===== same, by our Zeek label (%) =====
+           sqli  xss_sig  login_form   flows
+label                                       
+ddos        0.0      0.0         0.0    9972
+injection  52.0      0.0        32.7  292778
+mitm        0.0      0.0         0.0      11
+normal      0.0      0.1         0.0   23525
+xss         0.0      0.0         0.0       3
+
+===== LABEL AGREEMENT AND PAYLOAD, per NF class =====
+            nf_rows_total  matched_unique   agree  agree_%_of_matched  agree_with_payload  payload_%_of_agree  usable_%_of_nf_class
+backdoor            17247             244     244               100.0                   0                 0.0                  0.00
+ddos               326345          110756   61553                55.6                9407                15.3                  2.88
+dos                 17717            8377       0                 0.0                   0                 0.0                  0.00
+injection          468539          189256  185476                98.0              157781                85.1                 33.68
+mitm                 1295             482     404                83.8                  11                 2.7                  0.85
+normal             270279           73397   42722                58.2               23525                55.1                  8.70
+password           156299           72065      17                 0.0                   0                 0.0                  0.00
+ransomware            142               1       1               100.0                   0                 0.0                  0.00
+scanning            21467           13765       0                 0.0                   0                 0.0                  0.00
+xss                 99944           28019      14                 0.0                   1                 7.1                  0.00
+
+TOTAL rows: 1379274 | matched unique: 496362 | label agrees: 290431 | agree + payload: 190725
+L7 (injection, xss, password): NF rows 724782 | agree 185507 | agree+payload 157782
