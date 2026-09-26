@@ -482,6 +482,21 @@ Reading:
 - **L7 on FHF, all models:** injection, password and xss remain mutually confused. Centralised: 31–41 % of injection flows are predicted as injection, the rest as xss or password. FedGATSage: xss goes 55 % to Benign and 31 % to scanning, and injection 26 % to Benign.
 - The class sets differ (dos only in NF v1), so the macro-F1 values are not over identical classes.
 
+## 11r. Centralised XGBoost / RF with the FedGATSage settings: 1500 rows per label (`fedgatsage-centralised` v2, CPU, 2026-09-27)
+
+**Why (owner):** *"centralized balance kore koro nai? Etao same fedgatsage er moto 1500 per label diye krar kotha"*. §11q had used the notebook defaults (15k per class, classes with < 500 rows dropped, natural-mix test), which made it incomparable with §11p. Rerun with the exact 1500-per-label sets of §11p (same sampling code, seed 42), `--samples-per-class 1500 --min-raw-count 1`, so all 10 labels are kept. The test is 20 % by flow vector: 2,851 (NF) and 3,248 (FHF) flows, roughly balanced. Outputs: [centralised_fhf_vs_nfv1/bal1500/](experiment_log_outputs/centralised_fhf_vs_nfv1/bal1500/).
+
+| | FedGATSage NF | FedGATSage FHF | XGB FHF | RF FHF | XGB NF | RF NF |
+|---|---:|---:|---:|---:|---:|---:|
+| accuracy | 0.434 | 0.616 | 0.752 | 0.748 | 0.701 | 0.702 |
+| balanced acc. | 0.484 | 0.516 | 0.713 | 0.710 | 0.695 | 0.696 |
+| macro-F1 | 0.448 | 0.474 | 0.709 | 0.710 | 0.701 | 0.700 |
+| F1 injection / password / xss | 0.36 / 0.31 / 0.00 | 0.34 / 0.75 / 0.02 | 0.47 / 0.56 / 0.50 | 0.41 / 0.53 / 0.49 | 0.46 / 0.35 / 0.41 | 0.50 / 0.37 / 0.38 |
+| recall inj. / pw / xss | 0.47 / 0.20 / 0.00 | 0.38 / 0.76 / 0.01 | 0.40 / 0.59 / 0.49 | 0.36 / 0.51 / 0.51 | 0.43 / 0.35 / 0.46 | 0.47 / 0.37 / 0.39 |
+| precision inj. / pw / xss | 0.29 / 0.67 / 0.00 | 0.31 / 0.74 / 0.10 | 0.57 / 0.54 / 0.51 | 0.48 / 0.54 / 0.47 | 0.49 / 0.35 / 0.37 | 0.53 / 0.37 / 0.36 |
+
+Reading: with equal settings, the centralised flow-only models beat FedGATSage clearly (macro-F1 ≈ 0.71 vs 0.45–0.47). FHF helps the centralised models a little overall (+0.01) and on L7 password/xss (+0.1–0.2 F1). L7 stays the weakest group in every run (F1 ≤ 0.56 except FedGATSage-FHF password 0.75, where FedGATSage fails xss completely). This supersedes the §11q comparison. The test splits differ from §11p's (FedGATSage: ≈10 % random split inside `preprocess_data.py`; centralised: 20 % by flow vector), so single points of difference are noise-level.
+
 ## 12. Thesis repo sync
 
 - PR #3 (new Dataset/Setup/Results chapters) was merged on GitHub. The E0 commit was rebased onto it (`d1e93f5`), and the E0 numbers were filled into `Tab_D_Stats` and "Outcome of the Data Audit". Still open: template overlap and probe timing.
