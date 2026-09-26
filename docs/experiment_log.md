@@ -140,6 +140,24 @@ Metrics from Comet: [`experiment_log_outputs/comet/test_metrics_E1_E5_PROBE.txt`
 - So E5's α trend mostly reflects **which client draws the big block**, not α. Splitting blocks would break the no-cut rule.
 - **Decision:** rerunning E5 with several partition draws is not affordable (Phase 1 takes about 2 h per draw). Instead, a **partition-sensitivity** analysis runs the Phase-1-free models A2 and B1 at α ∈ {0.3, 0.5, 1.0, IID} × partition seeds {0, 1, 2} (24 short runs; runner support in commit `78c3334`). E5 will be reported next to that spread.
 
+## 11b. R2 = 20 results (Runner B v4, Runner A v3 in progress)
+
+| Run | R2 = 10 | **R2 = 20** |
+|---|---|---|
+| **E1** (seeds 0/1) | 0.815 / 0.849 → 0.832 ± 0.023 | **0.840 / 0.877 → 0.858 ± 0.027** |
+| A2 hashed n-grams | 0.794 | 0.841 |
+| A5 no `shares_host` | – | 0.830 |
+| A1 no payload | 0.777 | 0.824 |
+| B1 FedAvg MLP | 0.775 | 0.810 |
+| E5 α = 0.3 | 0.922 | 0.924 |
+| E5 α = 1.0 | 0.665 | **0.882** |
+| B5 XGBoost (central, reference) | 0.865 | – |
+
+- Every federated model gains 3–5 points, which confirms that R2 = 10 under-trained them.
+- E1 is now level with central XGBoost (0.858 vs. 0.865); seed 1 beats it. E1 − B1 = +4.8, E1 − A1 = +3.4, E1 − A2 = +1.7. Removing `shares_host` costs about 1 point (seed 0: 0.840 vs. 0.830).
+- **Correction to §11:** with R2 = 20, E5 at α = 1.0 no longer loses injection (0.665 → 0.882), so under-training was a large part of that collapse. The lumpy injection block is real, but it did not cause the collapse on its own. E5 is still non-monotonic (0.924 / 0.858 / 0.882 for α = 0.3 / 0.5 / 1.0), so the partition-sensitivity runs (Runner B v5) are still needed to separate the α effect from the partition-draw effect.
+- The R2 = 10 runs are kept next to the new ones as `runs/<exp>/.../seed=0.completed-<timestamp>/`.
+
 ## 12. Thesis repo sync
 
 - PR #3 (new Dataset/Setup/Results chapters) was merged on GitHub. The E0 commit was rebased onto it (`d1e93f5`), and the E0 numbers were filled into `Tab_D_Stats` and "Outcome of the Data Audit". Still open: template overlap and probe timing.
