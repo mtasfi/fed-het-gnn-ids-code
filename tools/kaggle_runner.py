@@ -32,11 +32,14 @@ EXTRA_SET = []                       # any other key=value overrides
 SMOKE = False
 OVERWRITE = False
 BRANCH = "main"
+RELEASE_REV = "v3"                   # v2 = thesis data (18 captures); v3 = v2 + 7 XSS/password captures
 # ==== /QUEUE ====
 
 DATASET = "toniot"
-RELEASE_REPO, RELEASE_REV = "mtasfi/toniot-fhf-processed", "v2"
-STATE_REPO = "mtasfi/fhf-state"
+RELEASE_REPO = "mtasfi/toniot-fhf-processed"
+# One state repo per release: run dirs and Phase-1 caches are keyed by experiment/alpha/seed, not by release,
+# so v3 runs must not share (and overwrite) the v2 runs the thesis reports.
+STATE_REPO = "mtasfi/fhf-state" if RELEASE_REV == "v2" else f"mtasfi/fhf-state-{RELEASE_REV}"
 CODE = "/kaggle/working/fed-het-gnn-ids-code"
 STATE = "/kaggle/working/fhf_state"
 WORK = f"{STATE}/work"
@@ -101,7 +104,7 @@ def restore_release():
     for sub in ("splits", "e0"):
         if os.path.isdir(f"{d}/{sub}"):
             shutil.copytree(f"{d}/{sub}", f"{root}/{sub}", dirs_exist_ok=True)
-    assert os.path.isdir(f"{root}/splits"), "release has no splits/"
+    # a release without splits/ (e.g. v3) is fine: the queue section rebuilds the splits right after this
     print(f"release {RELEASE_REV}: {len(flows):,} flows restored", flush=True)
 
 
