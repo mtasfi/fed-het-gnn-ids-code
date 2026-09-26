@@ -45,6 +45,8 @@ def index_runs(runs_dir: str, dataset: str) -> pd.DataFrame:
         with open(manifest) as f:
             m = json.load(f)
         path = os.path.dirname(manifest)
+        if '.completed-' in os.path.basename(path):
+            continue        # superseded run kept by --overwrite (e.g. the R2 = 10 runs); not a result
         row = {k: m.get(k) for k in ('run_id', 'experiment_id', 'variant', 'dataset', 'alpha', 'seed', 'status',
                                      'failure_reason', 'start', 'end', 'git_commit', 'git_dirty', 'comet_url')}
         row['path'] = path
@@ -60,8 +62,25 @@ def index_runs(runs_dir: str, dataset: str) -> pd.DataFrame:
     return df.sort_values(['experiment_id', 'variant', 'alpha', 'seed']).reset_index(drop=True)
 
 
+SENSITIVITY_PREFIX = 'psens_'   # partition-sensitivity variants: reported only in their own table
+
+
 def _completed(idx, exp):
-    return idx[(idx.experiment_id == exp) & (idx.status == 'completed')]
+    main = ~idx['variant'].astype(str).str.startswith(SENSITIVITY_PREFIX)
+    return idx[(idx.experiment_id == exp) & (idx.status == 'completed') & main]
+
+
+def partition_sensitivity(idx) -> pd.DataFrame:
+    """Macro-F1 per (experiment, alpha) over partition draws (variants psens_p<seed>)."""
+    ps = idx[idx['variant'].astype(str).str.startswith(SENSITIVITY_PREFIX) & (idx.status == 'completed')].copy()
+    if ps.empty:
+        return ps
+    ps['partition_seed'] = ps['variant'].str.replace(SENSITIVITY_PREFIX + 'p', '', regex=False)
+    g = ps.groupby(['experiment_id', 'alpha'])
+    out = g['macro_f1'].agg(['mean', 'std', 'min', 'max', 'count']).reset_index()
+    wc = g['worst_client_macro_f1'].agg(['mean', 'std']).reset_index().rename(
+        columns={'mean': 'worst_client_mean', 'std': 'worst_client_std'})
+    return out.merge(wc, on=['experiment_id', 'alpha'])
 
 
 # ----------------------------------------------------------------------------- tables
@@ -82,7 +101,8 @@ def paired_rows(idx, exps, ref='E1'):
     ref_runs = _completed(idx, ref).set_index(['alpha', 'seed'])
     out = []
     for exp in exps:
-        for _, r in idx[idx.experiment_id == exp].iterrows():
+        mine = idx[(idx.experiment_id == exp) & ~idx['variant'].astype(str).str.startswith(SENSITIVITY_PREFIX)]
+        for _, r in mine.iterrows():
             row = r[['experiment_id', 'variant', 'alpha', 'seed', 'status', 'failure_reason'] +
                     [c for c in HEADLINE + ['coverage'] if c in r]].to_dict()
             key = (r['alpha'], r['seed'])
@@ -316,6 +336,13 @@ def main():
         long = eff.drop(columns=['run_id']).iloc[0].rename('value').reset_index().rename(columns={'index': 'measure'})
         to_latex(long, ['measure', 'value'], os.path.join(out, 'table_efficiency.tex'),
                  'Measured efficiency of E1 (E6).', 'Tab_R_Efficiency')
+
+    sens = partition_sensitivity(idx)
+    if len(sens):
+        sens.to_csv(os.path.join(out, 'results_partition_sensitivity.csv'), index=False)
+        to_latex(sens, ['experiment_id', 'alpha', 'mean', 'std', 'min', 'max', 'count'],
+                 os.path.join(out, 'table_partition_sensitivity.tex'),
+                 'Macro-F1 over three partition draws per alpha (A2, B1).', 'Tab_R_PartitionSens')
 
     fig_convergence(idx, os.path.join(out, 'fig_convergence.pdf'))
     print(f"{len(idx)} runs indexed ({(idx.status == 'completed').sum()} completed, "
