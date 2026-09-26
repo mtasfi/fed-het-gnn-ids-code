@@ -400,6 +400,39 @@ Same matching as §11l (unique fingerprint matches only).
 - The NF "xss" and "password" rows that do match still come almost entirely from the injection captures, and they carry SQL-injection payloads (XSS signature 0 %). About 72k NF xss and 84k NF password rows match none of the 25 captures, either because they come from captures we do not have or because nProbe cut the flows differently.
 - **Conclusion:** NF-ToN-IoT v1 cannot be given payloads for XSS/password training. The finding for the thesis stays as in §11l/§11m, worded as an inconsistency on the matched subset. The new captures remain useful as data: v3 has 3× more XSS and password flows for any future run.
 
+## 11o. NF-ToN-IoT-FHF: NF-ToN-IoT v1 relabelled from matched ToN-IoT flows (build notebook v15, 2026-09-26)
+
+**Why (owner):** After the per-label match tables (§11n) showed that NF-ToN-IoT's password/xss rows are mostly injection-capture flows by ToN-IoT's own CSV labels, the owner asked where our labels come from (answer: ToN-IoT `Network_dataset_*.csv`, `type` column, via 5-tuple + time; not file names) and then asked for a relabelled copy: *"Y er shathe X er flow match korle Y er label ta priority pabe and match na korle X er label unchanged thakbe"*, with **no new columns**, uploaded to Kaggle as `nftoniot-fhf`.
+
+- X = Kaggle `mtasfi/nftoniot` (NF-ToN-IoT v1, 1,379,274 rows). Y = release v3 (25 captures, 5.95 M flows).
+- Match rule as in §11l (5-tuple in NF orientation, packets exact, bytes ±2 %, duration ±1 s). A row takes the Y label when all its candidates carry one label; conflicting candidates or no candidate → X label kept. `normal` → `Benign`; `Label` = 0 for Benign else 1. Output has X's 14 columns and row order; checked locally that only `Attack` and `Label` differ.
+- Script [nftoniot_fhf_relabel.py](experiment_log_outputs/nf_label_audit/nftoniot_fhf_relabel.py), [log](experiment_log_outputs/nf_label_audit/nftoniot_fhf_relabel_log.txt). Dataset: https://www.kaggle.com/datasets/mtasfi/nftoniot-fhf (private).
+
+| | rows |
+|---|---:|
+| relabelled from Y: one candidate | 496,362 |
+| relabelled from Y: several candidates, same label | 308,389 |
+| conflicting candidates (X kept) | 2,154 |
+| no candidate (X kept) | 572,369 |
+| `Attack` actually changed | 326,426 (23.7 %) |
+
+| Attack | before | after |
+|---|---:|---:|
+| injection | 468,539 | 606,616 |
+| ddos | 326,345 | 442,313 |
+| Benign | 270,279 | 182,710 |
+| password | 156,299 | 55,298 |
+| xss | 99,944 | 71,655 |
+| backdoor | 17,247 | 17,248 |
+| scanning | 21,467 | 1,460 |
+| mitm | 1,295 | 1,549 |
+| dos | 17,717 | 283 |
+| ransomware | 142 | 142 |
+
+Main moves: password → injection 70,169 and → ddos 30,866; xss → injection 28,398; Benign → ddos 86,875; ddos → injection 49,665; dos → ddos 15,833; scanning → ddos 10,316 / injection 9,663. The password/xss rows still in the file are almost all unmatched rows that keep the NF label, so they are not verified by ToN-IoT's CSV.
+
+Note (Build process): an attempt via Kaggle CLI push (v14) failed because a CLI-pushed version could not read the `HF_TOKEN` secret (HTTP 400); the MCP `save_notebook` push (v15) reads it. The dataset itself was created with the Kaggle CLI (the MCP has no create-dataset call).
+
 ## 12. Thesis repo sync
 
 - PR #3 (new Dataset/Setup/Results chapters) was merged on GitHub. The E0 commit was rebased onto it (`d1e93f5`), and the E0 numbers were filled into `Tab_D_Stats` and "Outcome of the Data Audit". Still open: template overlap and probe timing.

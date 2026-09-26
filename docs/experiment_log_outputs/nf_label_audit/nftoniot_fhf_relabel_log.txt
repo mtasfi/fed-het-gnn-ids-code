@@ -1,0 +1,45 @@
+X = NF-ToN-IoT.csv: 1,379,274 rows, columns ['IPV4_SRC_ADDR', 'L4_SRC_PORT', 'IPV4_DST_ADDR', 'L4_DST_PORT', 'PROTOCOL', 'L7_PROTO', 'IN_BYTES', 'OUT_BYTES', 'IN_PKTS', 'OUT_PKTS', 'TCP_FLAGS', 'FLOW_DURATION_MILLISECONDS', 'Label', 'Attack']
+Attack
+injection     468539
+ddos          326345
+Benign        270279
+password      156299
+xss            99944
+scanning       21467
+dos            17717
+backdoor       17247
+mitm            1295
+ransomware       142
+Y = release v3: 5,954,478 labelled flows
+
+X rows with >=1 fingerprint match: 806,905; single-label (relabelled): 804,751 (one candidate 496,362, several same-label 308,389); conflicting candidates, left unchanged: 2,154
+Attack changed on 326,426 rows (23.7%)
+
+===== old Attack (rows) x new Attack (cols), changed rows =====
+Attack     backdoor   ddos  injection  mitm  password  xss
+Attack                                                    
+Benign            1  86875        688     5         0    0
+ddos              0      0      49665   199         0    0
+dos               0  15833       1458   143         0    0
+injection         0  21827          0     5        18  123
+mitm              0    115          9     0         2    0
+password          0  30866      70169     0         0    3
+scanning          0  10316       9663    28         0    0
+xss               0      0      28398     0        17    0
+
+===== class counts =====
+            before   after   delta
+Attack                            
+injection   468539  606616  138077
+ddos        326345  442313  115968
+Benign      270279  182710  -87569
+xss          99944   71655  -28289
+password    156299   55298 -101001
+backdoor     17247   17248       1
+mitm          1295    1549     254
+scanning     21467    1460  -20007
+dos          17717     283  -17434
+ransomware     142     142       0
+
+binary Label: {'1': 1108995, '0': 270279} -> {'1': 1196564, '0': 182710}
+wrote /kaggle/working/nftoniot-fhf/NF-ToN-IoT.csv 98 MB
