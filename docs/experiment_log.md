@@ -203,6 +203,30 @@ Macro-F1 of the Phase-1-free models over three partition draws (`partition.seed`
 
 **Decision:** the headline claim (E1 > federated baselines) must hold beyond one draw. **E1 is run on the α = 0.5 draws p1 and p2** (training seed 0; about 2 h each for Phase 1), paired with the A2/B1 runs above. Runner B v6 runs p1, and runner A runs p2 after its seed-1 ablations. The Phase-1 cache tag now includes the partition draw (commit `f84d254`); p0 keeps the old tag.
 
+## 11e. Ablations over two seeds (R2 = 20; seed 1 from Runner A v4, 06:55–07:33)
+
+Paired with E1 on the same partition (α = 0.5, p0). Values are macro-F1; Δ is the 2-seed mean minus E1's 2-seed mean.
+
+| Run | Change vs. E1 | seed 0 | seed 1 | mean | Δ |
+|---|---|---|---|---|---|
+| **E1** | – | 0.840 | 0.877 | **0.858** | – |
+| B3 | centralised (no federation) | 0.867 | 0.888 | 0.878 | +1.9 |
+| A6 | no `next` edges | 0.854 | 0.880 | 0.867 | +0.9 |
+| A4 | homogeneous graph | 0.859 | 0.868 | 0.863 | +0.5 |
+| A2 | hashed n-grams instead of transformer | 0.841 | 0.863 | 0.852 | −0.6 |
+| A8 | no graph (fused MLP) | 0.841 | 0.855 | 0.848 | −1.0 |
+| A3 | frozen encoder (no LoRA) | 0.861 | 0.828 | 0.844 | −1.4 |
+| A5 | no `shares_host` | 0.830 | 0.840 | 0.835 | **−2.3** |
+| A1 | no payload | 0.824 | 0.828 | 0.826 | **−3.2** |
+| B1 | FedAvg MLP, flow statistics only | 0.810 | 0.820 | 0.815 | **−4.3** |
+| A9 | payload only (Phase-1 head) | 0.688 | 0.675 | 0.682 | −17.6 |
+
+- **Consistent over both seeds:** the payload channel (A1), host context (A5), and the full method against the flow-only federated floor (B1).
+- **Small or sign-unstable:** transformer vs. hashing (A2), LoRA vs. frozen (A3: +2.1 on seed 0, −4.9 on seed 1), message passing (A8).
+- **No benefit:** typed nodes/relations (A4) and `next` edges (A6).
+- Federation costs about 2 points (B3).
+- **For the thesis:** the payload and host-context claims are supported. The claim that the *transformer + federated LoRA* beats cheaper payload encoders is not supported at this scale and must be reported as such.
+
 ## 12. Thesis repo sync
 
 - PR #3 (new Dataset/Setup/Results chapters) was merged on GitHub. The E0 commit was rebased onto it (`d1e93f5`), and the E0 numbers were filled into `Tab_D_Stats` and "Outcome of the Data Audit". Still open: template overlap and probe timing.
