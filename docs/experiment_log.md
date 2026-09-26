@@ -20,11 +20,15 @@ Every run directory under `runs/` in `fhf-state` holds the record: `config.yaml`
 
 ## 1. Early attempt on a CSV without payloads (abandoned)
 
+**Why (owner):** PCAPs could not be uploaded at the time, so the owner asked to try the no-payload pipeline on a ToN-IoT CSV already on Kaggle.
+
 - **Idea:** try the no-payload pipeline on `arnobbhowmik/ton-iot-network-dataset`, the ToN-IoT `train_test_network.csv`: 211k rows, no timestamps, no payloads.
 - **What happened:** we wrote a converter (pseudo-time from the row order, 19 of the 50 features). Uploading the private code bundle to Kaggle was blocked by the permission system. We dropped the idea in favour of processing the real PCAPs.
 - **Takeaway:** that CSV has no timestamps, so a block split is impossible and it is useless for the thesis.
 
 ## 2. Plan: build the processed dataset once (E0 release)
+
+**Why (owner):** the owner wanted to upload the CSVs and PCAPs once, extract flows and payloads with a `flow_uid` linking them, and let every experiment import the result instead of re-extracting.
 
 - **Decision (owner):** upload the PCAPs and processed CSVs to Hugging Face, extract flows and payloads once, and publish a release that links `flows.parquet` and `payloads.parquet` through `flow_uid`. Every experiment then just imports the release.
 - **Build notebook:** `toniot-build-dataset`. It runs `experiments/run_e0.py` (extract → labels → offset → match → check → payload → split → kappa), exports the release, checks that the payload texts equal Phase 1's `payload_texts`, and pushes to HF.
@@ -70,6 +74,8 @@ Outputs: [`experiment_log_outputs/e0_release_v2/`](experiment_log_outputs/e0_rel
 
 ## 7. Runners and first batch (Runner B, 01:41–02:25)
 
+**Why:** all experiments had to finish within two days. Two Kaggle GPU sessions in parallel, with state kept on HF, lose at most one run to a session limit.
+
 Outputs: [`experiment_log_outputs/runner_b_batch1/`](experiment_log_outputs/runner_b_batch1/)
 
 `tools/kaggle_runner.py` runs the E0 tests, restores release v2, rebuilds the splits with the current code, pulls and pushes the state to `fhf-state`, and runs a queue.
@@ -90,6 +96,8 @@ Outputs: [`experiment_log_outputs/runner_b_batch1/`](experiment_log_outputs/runn
 - A1 ≈ B1: without payloads, `shares_host` adds little.
 
 ## 8. "Is the model cheating?" Four diagnostics (CPU)
+
+**Why (owner):** "Did the runner-B models cheat, e.g. through a column tied to the label such as IP or port? Fed_GNN's centralised version dropped many of those." The owner then asked ("are there too many features? NF-ToN-IoT has only 14 columns") and requested a decision tree ("can we see a direct pattern, if this then that label?"), which led to diagnostics 2 and 3.
 
 Full write-up: [`flow_feature_diagnostics.md`](flow_feature_diagnostics.md). Script: [`shortcut_check.py`](experiment_log_outputs/shortcut_check.py).
 
@@ -121,6 +129,8 @@ Metrics from Comet: [`experiment_log_outputs/comet/test_metrics_E1_E5_PROBE.txt`
 - PROBE is a timing run only; its score is meaningless (1 round).
 
 ## 10. E1 finished (R2 = 10) and Phase-2 rounds raised to 20
+
+**Why (owner):** "How many rounds do we run?" The round logs showed validation F1 still rising at the last round. The owner also asked whether Phase 1 would rerun (it does not; see below).
 
 - **E1 at R2 = 10:** seed 0 scored 0.815 and seed 1 0.849, so **0.832 ± 0.023** (worst client 0.626). Averaged over both seeds, injection is 0.835 and password 0.982, above central XGBoost (0.928). MITM is 0.00 / 0.23.
 - **Where the time goes** (runner log): a Phase-1 round takes about 22 min, 5 rounds about 110 min, embedding about 10 min, and a Phase-2 round about 6 s.
@@ -184,6 +194,8 @@ Metrics from Comet: [`experiment_log_outputs/comet/test_metrics_E1_E5_PROBE.txt`
 
 ## 11d. Partition sensitivity (Runner B v5, 06:29–07:29, 24 runs, all exit 0)
 
+**Why:** E5 gave a non-monotonic α trend (§11, §11b), so we had to separate the effect of α from the luck of one partition draw.
+
 Macro-F1 of the Phase-1-free models over three partition draws (`partition.seed` 0/1/2, R2 = 20, training seed 0):
 
 | Model | α | p0 | p1 | p2 | **mean** |
@@ -204,6 +216,8 @@ Macro-F1 of the Phase-1-free models over three partition draws (`partition.seed`
 **Decision:** the headline claim (E1 > federated baselines) must hold beyond one draw. **E1 is run on the α = 0.5 draws p1 and p2** (training seed 0; about 2 h each for Phase 1), paired with the A2/B1 runs above. Runner B v6 runs p1, and runner A runs p2 after its seed-1 ablations. The Phase-1 cache tag now includes the partition draw (commit `f84d254`); p0 keeps the old tag.
 
 ## 11e. Ablations over two seeds (R2 = 20; seed 1 from Runner A v4, 06:55–07:33)
+
+**Why:** on one seed several ablations beat E1, but E1's own two seeds differ by 3.7 points, so single-seed ablation differences could not be interpreted.
 
 Paired with E1 on the same partition (α = 0.5, p0). Values are macro-F1; Δ is the 2-seed mean minus E1's 2-seed mean.
 
@@ -228,6 +242,8 @@ Paired with E1 on the same partition (α = 0.5, p0). Values are macro-F1; Δ is 
 - **For the thesis:** the payload and host-context claims are supported. The claim that the *transformer + federated LoRA* beats cheaper payload encoders is not supported at this scale and must be reported as such.
 
 ## 11f. Payload-dependent classes (L7): a hashed encoder beats the transformer
+
+**Why (owner):** "How did the payload-dependent classes do without payloads?" and "Are the results in our favour or against?"
 
 Means over 2 seeds, R2 = 20, α = 0.5, p0. L7-F1 is the mean F1 over injection, password and XSS. Source: latest Comet run per name (`comet_latest.py`).
 
@@ -260,6 +276,8 @@ All latest per-run test metrics from Comet: [`comet/latest_test_metrics_all_runs
 
 ## 11h. E1 on three partition draws (α = 0.5, training seed 0)
 
+**Why:** after §11d, the headline claim (E1 > federated baselines) had to hold beyond one lucky partition draw.
+
 Runner B v6 ran p1 (112 min) and runner A v5 ran p2 (104 min). Phase 1 took 18–22 min per round.
 
 | Partition | E1 | A2 hashed | B1 FedAvg MLP | E1 − A2 | E1 − B1 |
@@ -291,6 +309,8 @@ Performance-weighted aggregation scores macro-F1 0.845 / 0.872, a mean of **0.85
 
 ## 11k. NetFlow-style features vs. the 50 extractor features (Runner A v7, Runner B v8, 17:55–18:16)
 
+**Why (owner):** "Don't take all flow features. Take only what NetFlow has, as in Fed_GNN, and see how results change with and without the extra features."
+
 **Question (owner):** how much do the extra flow features add, when the models see only the fields NF-ToN-IoT offers (as in Fed_GNN)?
 The NetFlow-8 set (`features.set=netflow`, commit `46ee603`) is in/out bytes, in/out packets, the OR of TCP flags, duration, protocol and destination port. Source port and L7_PROTO are left out. Same sprint split (the Phase-2 runs take 1–6 min each, and E1 reuses its Phase-1 cache). Two seeds each; B5 one. Full numbers: [`nf8_results.json`](experiment_log_outputs/nf8_results.json).
 
@@ -306,7 +326,9 @@ The NetFlow-8 set (`features.set=netflow`, commit `46ee603`) is in/out bytes, in
 - On the application-layer classes, the extra features do the payload's job. With NetFlow features, the GNN without payload loses 6.2 L7 points, but with payload nodes it loses only 1.0–2.6.
 - **With NetFlow features the payload gain on L7 is much larger:** A1 → A2 goes from +6.2 to **+9.8**, and A1 → E1 from +0.8 to **+6.1**. So the thesis premise (flow-only data leave an application-layer gap that payloads fill) holds for NetFlow-level flow information. The 50 extractor features already close much of that gap.
 
-## 11l. Why NetFlow-8 works here but not on NF-ToN-IoT: NF-ToN-IoT label noise
+## 11l. Why NetFlow-8 works here but not on NF-ToN-IoT: label inconsistency in NF-ToN-IoT
+
+**Why (owner):** "When I ran XGBoost and RF on NF-ToN-IoT, accuracy, and especially the L7 classes, was not this good. How do the same 8 NetFlow features do so well here?" Follow-ups: "NF-ToN-IoT is popular and built from ToN-IoT, isn't it? Can we add the ToN-IoT payloads to the NF-ToN-IoT CSV that FedGATSage used?"
 
 **Question (owner):** Fed_GNN's centralised XGBoost/RF on NF-ToN-IoT (Comet `fedgatsage-centralised`: macro-F1 0.50; XSS 0.30, password 0.38, scanning 0.13) failed on the L7 classes. Why do the same 8 NetFlow fields reach 0.87 on our flows?
 
@@ -328,7 +350,31 @@ The NetFlow-8 set (`features.set=netflow`, commit `46ee603`) is in/out bytes, in
 
 Under Zeek labels, DDoS flows carry 0 % SQLi and injection flows 52 %: the Zeek labels agree with the payloads, and the NF labels do not.
 
-**Conclusion:** NF-ToN-IoT (v1) splits single SQL-injection sessions across the labels injection, xss, password, scanning and ddos, likely because it labels by attack-schedule time windows while several attacks ran from the same hosts at the same time. The "impossible" XSS and password classes of the preliminary study are therefore largely **label noise** in NF-ToN-IoT, not a limit of NetFlow fields or of flow-level models. This also explains why flow-only models are strong on the original ToN-IoT labels. Attaching payloads to NF-ToN-IoT v1 rows is technically possible (36 % unique matches), but it would teach payloads to wrong labels, so it is not pursued.
+**Conclusion:** NF-ToN-IoT (v1) splits single SQL-injection sessions across the labels injection, xss, password, scanning and ddos, likely because it labels by attack-schedule time windows while several attacks ran from the same hosts at the same time. On this matched subset, the "impossible" XSS and password classes of the preliminary study come from **labels that are inconsistent with ToN-IoT's own labels and with the payloads**, not from a limit of NetFlow fields or of flow-level models. This also explains why flow-only models are strong on the original ToN-IoT labels. Attaching payloads to NF-ToN-IoT v1 rows is technically possible (36 % unique matches), but it would teach payloads to wrong labels, so it is not pursued.
+
+## 11m. Rows where NF-ToN-IoT and ToN-IoT labels agree, and their payloads
+
+**Why (owner):** "We cannot call a popular dataset false. How many rows match in both label sources, how many of those can get a payload, and what share for L7? Then we will know whether that data is enough to train on."
+
+Same matching as §11l (unique fingerprint matches only).
+
+| NF class | NF rows | matched | labels agree | agree % | agree + payload | payload % of agreed |
+|---|---|---|---|---|---|---|
+| injection | 468,539 | 189,360 | 185,537 | 98.0 | **157,781** | 85.0 |
+| xss | 99,944 | 28,124 | **58** | 0.2 | **1** | – |
+| password | 156,299 | 72,064 | **16** | 0.0 | **0** | – |
+| scanning | 21,467 | 13,765 | 0 | 0.0 | 0 | – |
+| dos | 17,717 | 8,377 | 0 | 0.0 | 0 | – |
+| ddos | 326,345 | 110,756 | 61,553 | 55.6 | 9,407 | 15.3 |
+| normal | 270,279 | 73,380 | 42,705 | 58.2 | 23,489 | 55.0 |
+| backdoor | 17,247 | 244 | 244 | 100 | 0 | 0 |
+| mitm | 1,295 | 482 | 404 | 83.8 | 11 | 2.7 |
+| ransomware | 142 | 1 | 1 | 100 | 0 | 0 |
+| **total** | 1,379,274 | 496,553 | **290,518** | 58.5 | **190,689** | 65.6 |
+
+- **L7:** of 724,782 NF rows labelled injection, xss or password, 185,611 agree with ToN-IoT's label and 157,782 of those carry a payload. **Almost all are injection**: XSS has 58 agreeing rows (1 with payload) and password has 16 (0 with payload).
+- A clean "NF-ToN-IoT ∩ ToN-IoT + payload" subset can therefore train injection, normal and DDoS, but **not XSS or password**. Their NF rows in our captures almost never carry the ToN-IoT label.
+- **Caveat:** the matched rows come mostly from the two injection captures, and the XSS and password captures matched only a few hundred NF rows. NF-ToN-IoT's XSS and password rows from other captures (not in our release) may agree better. The result holds for the 18 captures we have.
 
 ## 12. Thesis repo sync
 
