@@ -285,6 +285,10 @@ AGG indexed 58 runs, all completed. The outputs are in [`experiment_log_outputs/
 
 **Thesis updated** (fed-het-gnn-ids `7e98f56`): Results and Conclusions were rewritten on the measured numbers, all eight Chapter-7 figures were regenerated ([`thesis_figures/make_figs.py`](experiment_log_outputs/thesis_figures/make_figs.py), with inputs `thesis_numbers.json` and `fig_data.json`), the Abstract now carries the main findings, and B2/A7 are marked as not run. There are no `\PH` placeholders left in the chapters.
 
+## 11j. A7 (Runner B v7, 2 seeds, about 3 min each)
+
+Performance-weighted aggregation scores macro-F1 0.845 / 0.872, a mean of **0.858, identical to E1**. L7-F1 is 0.894 (−0.004) and the worst client 0.681. There is no benefit, so FedAvg is kept. Thesis updated (`A7` row, Setup note); B2 is the only planned run not done.
+
 ## 12. Thesis repo sync
 
 - PR #3 (new Dataset/Setup/Results chapters) was merged on GitHub. The E0 commit was rebased onto it (`d1e93f5`), and the E0 numbers were filled into `Tab_D_Stats` and "Outcome of the Data Audit". Still open: template overlap and probe timing.
@@ -296,5 +300,5 @@ AGG indexed 58 runs, all completed. The outputs are in [`experiment_log_outputs/
 | Runner | Queue |
 |---|---|
 | A (v4, running) | seed 1 of A1, A2, A4, A5, A6, A8, A9, B1, B3, A3, E4 |
-| – | all planned runs done (B2 and A7 not run in the sprint) |
+| – | all planned runs done except B2 (owner: not needed) |
 
