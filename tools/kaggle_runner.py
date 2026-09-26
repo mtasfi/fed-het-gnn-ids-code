@@ -172,8 +172,26 @@ pull_state()
 results = {}
 for exp in QUEUE:
     t0 = time.time()
+    label = exp if isinstance(exp, str) else json.dumps(exp, sort_keys=True)
     try:
-        if exp == "PROBE":
+        if isinstance(exp, dict) and exp.get("kind") == "resplit":
+            # partition-sensitivity analysis: redraw the client partitions with another seed
+            # (train/test blocks do not depend on partition.seed, only the client assignment does)
+            extra = [f"partition.seed={exp['partition_seed']}"]
+            cmd = [sys.executable, "-u", "experiments/run_e0.py", "split", "--dataset", DATASET]
+            for s_ in SET + extra:
+                cmd += ["--set", s_]
+            code = subprocess.run(cmd).returncode
+        elif isinstance(exp, dict):
+            # {"exp": "A2", "variant": "psens_p1", "alpha": 0.3, "set": ["partition.seed=1"]}
+            args = ["experiments/run.py", "--exp", exp["exp"], "--dataset", DATASET, "--variant", exp["variant"]]
+            if exp.get("alpha") is not None:
+                args += ["--alpha", str(exp["alpha"])]
+            for s_ in exp.get("set", []):
+                args += ["--set", s_]
+            args += (["--overwrite"] if OVERWRITE else [])
+            code = run(*args)
+        elif exp == "PROBE":
             code = run("experiments/run_probe.py", "--dataset", DATASET, "--flows", 10000)
         elif exp == "AGG":
             code = run("experiments/aggregate_results.py", "--dataset", DATASET)
@@ -183,9 +201,9 @@ for exp in QUEUE:
     except Exception:
         traceback.print_exc()
         code = -1
-    results[exp] = {"exit": code, "minutes": round((time.time() - t0) / 60, 1)}
-    print(f"===== {exp}: exit {code}, {results[exp]['minutes']} min", flush=True)
-    push_state(f"{exp} exit {code}")
+    results[label] = {"exit": code, "minutes": round((time.time() - t0) / 60, 1)}
+    print(f"===== {label}: exit {code}, {results[label]['minutes']} min", flush=True)
+    push_state(f"{label[:60]} exit {code}")
 
 print("\n===== QUEUE RESULT =====")
 print(json.dumps(results, indent=1))
