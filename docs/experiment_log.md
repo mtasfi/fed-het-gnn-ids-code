@@ -182,6 +182,27 @@ Metrics from Comet: [`experiment_log_outputs/comet/test_metrics_E1_E5_PROBE.txt`
 
 **Bug found and fixed:** runner A pulled the shared state at 06:00 and pushed every local run dir after each experiment. This overwrote runner B's newer R2 = 20 results for A1/A2/B1/E5 in `fhf-state` with stale R2 = 10 copies. Runner B's next pushes restored them, and runners now push only the run dirs written in their own session (commit `6090aac`).
 
+## 11d. Partition sensitivity (Runner B v5, 06:29–07:29, 24 runs, all exit 0)
+
+Macro-F1 of the Phase-1-free models over three partition draws (`partition.seed` 0/1/2, R2 = 20, training seed 0):
+
+| Model | α | p0 | p1 | p2 | **mean** |
+|---|---|---|---|---|---|
+| A2 | 0.3 | 0.895 | 0.835 | 0.656 | 0.795 |
+| A2 | 0.5 | 0.842 | 0.842 | 0.611 | 0.765 |
+| A2 | 1.0 | 0.825 | 0.717 | 0.737 | 0.760 |
+| A2 | IID | 0.804 | 0.892 | 0.929 | **0.875** |
+| B1 | 0.3 | 0.824 | 0.777 | 0.625 | 0.742 |
+| B1 | 0.5 | 0.810 | 0.694 | 0.621 | 0.708 |
+| B1 | 1.0 | 0.656 | 0.701 | 0.626 | 0.661 |
+| B1 | IID | 0.818 | 0.803 | 0.845 | **0.822** |
+
+- At a fixed α, the partition draw moves macro-F1 by up to 0.23 (0.61–0.84), which is more than α itself does.
+- Averaged over draws, the expected picture appears: IID is best, and skew hurts. A single draw per α (like E5) cannot show this.
+- The main partition (α = 0.5, p0) is a **favourable draw** (A2 0.842 vs. a mean of 0.765), so single-partition numbers, including E1's 0.858, are optimistic.
+
+**Decision:** the headline claim (E1 > federated baselines) must hold beyond one draw. **E1 is run on the α = 0.5 draws p1 and p2** (training seed 0; about 2 h each for Phase 1), paired with the A2/B1 runs above. Runner B v6 runs p1, and runner A runs p2 after its seed-1 ablations. The Phase-1 cache tag now includes the partition draw (commit `f84d254`); p0 keeps the old tag.
+
 ## 12. Thesis repo sync
 
 - PR #3 (new Dataset/Setup/Results chapters) was merged on GitHub. The E0 commit was rebased onto it (`d1e93f5`), and the E0 numbers were filled into `Tab_D_Stats` and "Outcome of the Data Audit". Still open: template overlap and probe timing.
@@ -193,5 +214,6 @@ Metrics from Comet: [`experiment_log_outputs/comet/test_metrics_E1_E5_PROBE.txt`
 | Runner | Queue |
 |---|---|
 | A (v4, running) | seed 1 of A1, A2, A4, A5, A6, A8, A9, B1, B3, A3, E4 |
-| B (v5, running) | partition sensitivity: A2, B1 × α {0.3, 0.5, 1.0, IID} × partition seed {0, 1, 2} |
+| B (v6, running) | E1 on α = 0.5, partition draw p1 |
+| A (next) | E1 on α = 0.5, partition draw p2 |
 | last | (A7) → AGG → thesis Results |
