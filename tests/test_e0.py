@@ -247,6 +247,17 @@ def test_metrics_keep_absent_class_visible():
     assert rep['summary']['worst_client_macro_f1'] <= rep['summary']['macro_f1'] + 1
 
 
+def test_netflow_feature_set():
+    from fhf.data.features import NETFLOW_COLUMNS, feature_matrix
+    cfg = load_config('toniot', overrides={'features.set': 'netflow'})
+    df = pd.DataFrame({c: [0.0, 3.0] for c in ('fwd_bytes', 'bwd_bytes', 'fwd_pkts', 'bwd_pkts', 'duration',
+                                                'proto_tcp', 'proto_udp', 'proto_icmp', 'dst_port',
+                                                'fin_cnt', 'syn_cnt', 'rst_cnt', 'psh_cnt', 'ack_cnt', 'urg_cnt')})
+    x = feature_matrix(df, cfg)
+    assert x.shape == (2, len(NETFLOW_COLUMNS))
+    assert x[1, NETFLOW_COLUMNS.index('tcp_flags')] == 63.0 and x[0, NETFLOW_COLUMNS.index('tcp_flags')] == 0.0
+
+
 def test_no_identity_column_is_a_feature(cfg):
     cols = feature_columns(cfg)
     assert not {'src_ip', 'dst_ip', 'first_ts', 'flow_uid', 'src_port', 'dst_port_id'} & set(cols)

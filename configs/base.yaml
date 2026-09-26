@@ -89,6 +89,7 @@ partition:
   alpha_sweep: [0.3, 1.0]    # LOCKED IN E0: the two values for E5
 
 features:
+  set: full                  # full = the 50 extractor features; netflow = the NF-ToN-IoT fields (fhf/data/features.py)
   log1p: true                # per-value transform before scaling; needs no statistics
   # Identity columns are never model features. Enforced in code (fhf/data/features.py):
   # these names, and any column named like an IP address field, are rejected.
