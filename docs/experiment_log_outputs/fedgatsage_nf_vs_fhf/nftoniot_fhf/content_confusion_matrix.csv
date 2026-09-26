@@ -1,0 +1,11 @@
+,Benign,backdoor,ddos,dos,injection,mitm,password,ransomware,scanning,xss
+Benign,125,6,8,0,0,1,0,15,0,2
+backdoor,0,154,0,0,0,1,0,2,0,0
+ddos,24,0,3,15,0,1,0,0,99,1
+dos,0,0,0,30,0,0,0,0,2,0
+injection,0,0,6,7,3,1,29,0,80,23
+mitm,0,0,0,63,0,83,0,0,0,0
+password,0,0,0,0,0,0,119,0,7,14
+ransomware,0,0,0,0,0,0,0,16,0,0
+scanning,0,0,0,3,0,0,0,0,134,0
+xss,0,0,9,9,0,0,0,0,131,13

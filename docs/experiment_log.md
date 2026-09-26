@@ -431,7 +431,26 @@ Same matching as §11l (unique fingerprint matches only).
 
 Main moves: password → injection 70,169 and → ddos 30,866; xss → injection 28,398; Benign → ddos 86,875; ddos → injection 49,665; dos → ddos 15,833; scanning → ddos 10,316 / injection 9,663. The password/xss rows still in the file are almost all unmatched rows that keep the NF label, so they are not verified by ToN-IoT's CSV.
 
-Note (Build process): an attempt via Kaggle CLI push (v14) failed because a CLI-pushed version could not read the `HF_TOKEN` secret (HTTP 400); the MCP `save_notebook` push (v15) reads it. The dataset itself was created with the Kaggle CLI (the MCP has no create-dataset call).
+Note (build process): an attempt via Kaggle CLI push (v14) failed because a CLI-pushed version could not read the `HF_TOKEN` secret (HTTP 400); the MCP `save_notebook` push (v15) reads it. The dataset itself was created with the Kaggle CLI (the MCP has no create-dataset call).
+
+## 11p. FedGATSage on NF-ToN-IoT vs NF-ToN-IoT-FHF, 1500 rows per class (Kaggle `fedgatsage-nf-vs-fhf` v1, CPU, 2026-09-26/27)
+
+**Why (owner):** With the relabelled NF-ToN-IoT-FHF (§11o) ready, the owner asked for a quick first check of what the relabelling does to a model: run FedGATSage (the owner's `Fed_GNN` notebook `asfi-fed-gnn`) on the new dataset and on the original NF-ToN-IoT with identical settings, *"5ta client and per class balance kore 1500 row nao, payload chara"*, 15 rounds, *"dekhi diff kemon"*.
+
+- Code: `asfi50/Fed_GNN` branch `v2`, unchanged; `preprocess_data.py --num_clients 5` then `experiments/fedgatsage_experiment.py --num_clients 5 --num_rounds 15` (3 GATs + RF ensemble). Sampling: `min(1500, n)` rows per `Attack`, seed 42 → NF 13,437 rows, FHF 12,385 (FHF has only 1,460 scanning, 283 dos; both have 142 ransomware). Test set ≈ 10 %: 1,344 / 1,239 flows. One seed.
+- CPU notebook: ~109 s/round (NF) and ~94 s/round (FHF); 27 + 24 min. The long runtime is the FedGATSage rounds on 4 CPU threads, not package install.
+- Outputs: [fedgatsage_nf_vs_fhf/](experiment_log_outputs/fedgatsage_nf_vs_fhf/) (result.json, confusion matrices, experiment logs, notebook with signed links stripped). Comet: FedGATSage logs to its own project.
+
+| | NF-ToN-IoT | NF-ToN-IoT-FHF |
+|---|---:|---:|
+| accuracy | 0.434 | 0.616 |
+| balanced accuracy | 0.484 | 0.516 |
+| macro-F1 (ensemble) | 0.448 | 0.474 |
+| temporal / content / behavioral GAT macro-F1 | 0.314 / 0.540 / 0.480 | 0.455 / 0.501 / 0.528 |
+
+Per-class F1 (ensemble), NF → FHF: Benign 0.904 → 0.620; backdoor 0.902 → 0.990; ddos 0.077 → 0.488; dos 0.000 → 0.000; injection 0.357 → 0.340; mitm 0.821 → 0.859; **password 0.308 → 0.746**; ransomware 0.833 → 0.000 (15–16 test flows); **scanning 0.279 → 0.671**; xss 0.000 → 0.022.
+
+Reading: on FHF the password, scanning and ddos classes become separable, consistent with §11o, where those NF labels were largely moved off injection-capture flows. XSS stays unlearnable on both (FHF xss rows are mostly unmatched rows with the original NF label; 89 of 162 test xss flows are predicted Benign on FHF). Benign drops on FHF (FHF Benign has 87k rows moved to ddos, leaving a different mix). Single seed and ~130–160 test flows per class, so differences of a few points are noise; ransomware (n = 16) is not interpretable.
 
 ## 12. Thesis repo sync
 
