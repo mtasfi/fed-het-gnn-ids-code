@@ -117,9 +117,21 @@ def pull_state():
     print("state pulled from", STATE_REPO, flush=True)
 
 
+TOUCHED = set()   # experiment ids run in THIS session
+SESSION_T0 = time.time()   # run dirs whose manifest is newer than this are pushed
+
+
 def push_state(label):
-    """Upload what later sessions need: runs, caches, probe, results. Never raw flows/payloads."""
-    patterns = ["runs/**", f"work/{DATASET}/cache/**", f"work/{DATASET}/probe/**", "results/**"]
+    """Upload what later sessions need: this session's runs, caches, results. Never raw flows/payloads.
+    Only run dirs of experiments executed here are pushed: two runners share STATE_REPO, and pushing
+    every local run dir would overwrite the other runner's newer results with this session's stale copies."""
+    fresh = []
+    for m in glob.glob(f"{STATE}/runs/**/manifest.json", recursive=True):
+        if os.path.getmtime(m) >= SESSION_T0:          # created or rewritten in this session
+            fresh.append(os.path.relpath(os.path.dirname(m), STATE) + "/**")
+    patterns = fresh + [f"work/{DATASET}/cache/**", f"work/{DATASET}/probe/**"]
+    if "AGG" in TOUCHED:
+        patterns.append("results/**")
     for attempt in range(3):
         try:
             api.upload_folder(folder_path=STATE, repo_id=STATE_REPO, repo_type="dataset", allow_patterns=patterns,
@@ -169,10 +181,16 @@ if not os.path.exists(f"{WORK}/{DATASET}/splits/.resplit_{COMMIT[:10]}"):
     assert run("experiments/run_e0.py", "split", "--dataset", DATASET) == 0, "E0 split failed"
     open(f"{WORK}/{DATASET}/splits/.resplit_{COMMIT[:10]}", "w").close()
 pull_state()
+time.sleep(2)
+SESSION_T0 = time.time()   # after the pull: pulled run dirs carry download-time mtimes and must not count as fresh
 results = {}
 for exp in QUEUE:
     t0 = time.time()
     label = exp if isinstance(exp, str) else json.dumps(exp, sort_keys=True)
+    if isinstance(exp, str):
+        TOUCHED.add(exp)
+    elif exp.get("exp"):
+        TOUCHED.add(exp["exp"])
     try:
         if isinstance(exp, dict) and exp.get("kind") == "resplit":
             # partition-sensitivity analysis: redraw the client partitions with another seed
