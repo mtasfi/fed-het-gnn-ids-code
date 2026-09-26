@@ -1,0 +1,11 @@
+item,runs,est_gpu_h
+"E1 main, 2 seeds",2,28.55
+"E5 alpha sweep (2 alphas, full pipeline)",2,28.55
+"A1, A4, A5, A6, A7 (Phase 2 only)",5,0.08
+A3 frozen encoder (embedding + Phase 2),1,0.18
+A2 hashed n-grams (CPU transform + Phase 2),1,0.02
+"B1, A8 federated MLP",2,0.01
+B3 centralized HetGNN,1,0.02
+"B2 FedGATSage rerun (plan estimate, not probed)",1,2.0
+"E4 sweep, A9, E6 (inference only)",3,0.3
+TOTAL,18,59.71

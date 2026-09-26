@@ -248,6 +248,16 @@ Means over 2 seeds, R2 = 20, α = 0.5, p0. L7-F1 is the mean F1 over injection, 
 - **The transformer + federated LoRA does not:** E1's injection F1 (0.747) is as low as no payload, and 0.16 below hashed n-grams. E1's macro-F1 edge comes from *normal* (0.83) and ransomware, not from the L7 classes.
 - **Consequence for the thesis:** at this scale (195k flows, R1 = 5, weakly supervised Phase 1), the headline claim must be "payload content and host context help federated detection of application-layer attacks; a cheap hashed payload encoder is at least as good as a federated-LoRA transformer". The transformer result is a negative finding to report and discuss (likely causes: short Phase 1, flow-level weak labels on segments, only ~100k readable segments).
 
+## 11g. Template overlap and timing probe
+
+**Template overlap** (E0, [`template_overlap_report.csv`](experiment_log_outputs/e0_release_v2/template_overlap_report.csv)): the share of test payload templates that also occur in training.
+- XSS 98 % (99 % of test flows), password 94 % (99.7 %), normal 57 % (96 %), **injection 9 % (34 %)**.
+- XSS and password payloads are largely memorisable templates. Injection is the one class with mostly *novel* test payloads, so it is the real test of payload understanding. On injection, hashed n-grams (0.909) beat the transformer (0.747) by a wide margin.
+
+**Timing probe** ([`probe_report.md`](experiment_log_outputs/probe/probe_report.md)) estimated 138 ms per training segment per Phase-1 round, which extrapolates to 14.3 GPU-h per E1 run. The measured cost was about 22 min per Phase-1 round, about 2 h per E1 run. The probe overestimated by about 7× (the per-segment cost does not scale linearly from 1.4k to 73k segments).
+
+All latest per-run test metrics from Comet: [`comet/latest_test_metrics_all_runs.csv`](experiment_log_outputs/comet/latest_test_metrics_all_runs.csv) (script: [`comet_latest.py`](experiment_log_outputs/comet_latest.py)).
+
 ## 12. Thesis repo sync
 
 - PR #3 (new Dataset/Setup/Results chapters) was merged on GitHub. The E0 commit was rebased onto it (`d1e93f5`), and the E0 numbers were filled into `Tab_D_Stats` and "Outcome of the Data Audit". Still open: template overlap and probe timing.
