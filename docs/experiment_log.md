@@ -289,6 +289,23 @@ AGG indexed 58 runs, all completed. The outputs are in [`experiment_log_outputs/
 
 Performance-weighted aggregation scores macro-F1 0.845 / 0.872, a mean of **0.858, identical to E1**. L7-F1 is 0.894 (−0.004) and the worst client 0.681. There is no benefit, so FedAvg is kept. Thesis updated (`A7` row, Setup note); B2 is the only planned run not done.
 
+## 11k. NetFlow-style features vs. the 50 extractor features (Runner A v7, Runner B v8, 17:55–18:16)
+
+**Question (owner):** how much do the extra flow features add, when the models see only the fields NF-ToN-IoT offers (as in Fed_GNN)?
+The NetFlow-8 set (`features.set=netflow`, commit `46ee603`) is in/out bytes, in/out packets, the OR of TCP flags, duration, protocol and destination port. Source port and L7_PROTO are left out. Same sprint split (the Phase-2 runs take 1–6 min each, and E1 reuses its Phase-1 cache). Two seeds each; B5 one. Full numbers: [`nf8_results.json`](experiment_log_outputs/nf8_results.json).
+
+| Model | macro-F1 full → NF8 | Δ | L7-F1 full → NF8 | Δ |
+|---|---|---|---|---|
+| B5 XGBoost (central) | 0.865 → 0.871 | +0.006 | 0.945 → 0.940 | −0.005 |
+| B1 FedAvg MLP | 0.815 → **0.741** | **−0.074** | 0.830 → 0.734 | −0.096 |
+| A1 GNN, no payload | 0.826 → 0.830 | +0.004 | 0.890 → **0.828** | **−0.062** |
+| A2 GNN + hashed payload | 0.852 → 0.871 | +0.019 | 0.952 → 0.926 | −0.026 |
+| E1 GNN + transformer | 0.858 → 0.859 | +0.001 | 0.898 → 0.889 | −0.010 |
+
+- Only the federated MLP needs the rich features overall (−7.4). The graph models keep their macro-F1, because host context (`shares_host`) makes up for the missing statistics.
+- On the application-layer classes, the extra features do the payload's job. With NetFlow features, the GNN without payload loses 6.2 L7 points, but with payload nodes it loses only 1.0–2.6.
+- **With NetFlow features the payload gain on L7 is much larger:** A1 → A2 goes from +6.2 to **+9.8**, and A1 → E1 from +0.8 to **+6.1**. So the thesis premise (flow-only data leave an application-layer gap that payloads fill) holds for NetFlow-level flow information. The 50 extractor features already close much of that gap.
+
 ## 12. Thesis repo sync
 
 - PR #3 (new Dataset/Setup/Results chapters) was merged on GitHub. The E0 commit was rebased onto it (`d1e93f5`), and the E0 numbers were filled into `Tab_D_Stats` and "Outcome of the Data Audit". Still open: template overlap and probe timing.
