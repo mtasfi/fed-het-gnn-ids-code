@@ -452,6 +452,35 @@ Per-class F1 (ensemble), NF → FHF: Benign 0.904 → 0.620; backdoor 0.902 → 
 
 Reading: on FHF the password, scanning and ddos classes become separable, consistent with §11o, where those NF labels were largely moved off injection-capture flows. XSS stays unlearnable on both (FHF xss rows are mostly unmatched rows with the original NF label; 89 of 162 test xss flows are predicted Benign on FHF). Benign drops on FHF (FHF Benign has 87k rows moved to ddos, leaving a different mix). Single seed and ~130–160 test flows per class, so differences of a few points are noise; ransomware (n = 16) is not interpretable.
 
+## 11q. Centralised XGBoost / RF on NF-ToN-IoT-FHF vs NF-ToN-IoT v1 (Kaggle `fedgatsage-centralised`, CPU, 2026-09-27)
+
+**Why (owner):** After §11p, the owner asked to run their centralised notebook (`fedgatsage-centralised`, Fed_GNN branch `centralised`, XGBoost and RF) on the FHF dataset. NF-ToN-IoT v1 was run in the same session with identical settings so the two can be compared (earlier runs of that notebook used `dhoogla/nftoniotv2`).
+
+- Scripts unchanged: `centralised/preprocess.py --samples-per-class 15000 --min-raw-count 500`, then `train_xgboost.py` / `train_random_forest.py`. Features are per-flow only (IPs, source port and the label column dropped); split by flow-feature vector (20 % test, natural class mix), training set undersampled to ≤15k per class. `--min-raw-count 500` drops ransomware from both and dos from FHF (283 rows).
+- The notebook had a single saved version, so this push replaced its source. The original is `centralised/run_kaggle.ipynb` in Fed_GNN branch `centralised`. Outputs: [centralised_fhf_vs_nfv1/](experiment_log_outputs/centralised_fhf_vs_nfv1/).
+
+| F1 | FHF XGB | FHF RF | NF v1 XGB | NF v1 RF |
+|---|---:|---:|---:|---:|
+| accuracy | 0.555 | 0.588 | 0.563 | 0.570 |
+| **macro-F1** | 0.543 | 0.550 | 0.496 | 0.495 |
+| Benign | 0.933 | 0.920 | 0.997 | 0.997 |
+| backdoor | 0.984 | 0.988 | 0.985 | 0.987 |
+| ddos | **0.838** | **0.814** | 0.477 | 0.502 |
+| injection | 0.469 | 0.563 | 0.496 | 0.551 |
+| mitm | 0.540 | 0.567 | 0.434 | 0.465 |
+| password | 0.271 | 0.259 | 0.383 | 0.318 |
+| scanning | 0.047 | 0.047 | 0.127 | 0.096 |
+| xss | 0.262 | 0.244 | 0.302 | 0.268 |
+| dos | – | – | 0.265 | 0.270 |
+
+Test support (FHF): injection 122,522, Benign 42,131, ddos 38,139, xss 14,452, password 10,839, backdoor 3,793, mitm 268, scanning 173.
+
+Reading:
+- The gain comes from ddos (+0.34 F1): on FHF, ddos rows that ToN-IoT labels as injection moved out, and Benign rows that ToN-IoT labels as ddos moved in, so the ddos class is consistent with its flow statistics.
+- Password/xss/scanning get *worse* with flow-only features. In the FHF test set, 40,288 injection flows are predicted password and 42,521 xss (XGB). The injection class now contains the former NF password/xss rows, and these have the same per-flow NetFlow vectors as the password/xss rows left unmatched with their NF labels. Per-flow features cannot separate the two. Scanning has 173 test flows, and 4,651 ddos flows predicted as scanning give it near-zero precision.
+- Contrast with §11p: FedGATSage (IP graph, host context) reached password 0.746 / scanning 0.671 on FHF. The FHF password and scanning labels are separable by *who talks to whom*, not by single-flow statistics. This is consistent with our own finding that host context (A6/A7 relations) matters.
+- The class sets differ (dos only in NF v1), so the macro-F1 values are not over identical classes.
+
 ## 12. Thesis repo sync
 
 - PR #3 (new Dataset/Setup/Results chapters) was merged on GitHub. The E0 commit was rebased onto it (`d1e93f5`), and the E0 numbers were filled into `Tab_D_Stats` and "Outcome of the Data Audit". Still open: template overlap and probe timing.
