@@ -35,8 +35,11 @@ def encoder_short(cfg) -> str:
 def embedding_tag(cfg, source: str) -> str:
     smoke = ('_smoke' if cfg.get('smoke') else '') + (f"_probe{cfg.subset_flows}" if cfg.get('subset_flows') else '')
     if source == 'lora':
+        # Phase 1 is trained on the clients of one partition draw, so the draw is part of the tag.
+        # partition.seed 0 (the main partition) keeps the original tag, so existing caches stay valid.
+        pseed = int(cfg.partition.get('seed', 0) or 0)
         return (f"lora_{encoder_short(cfg)}_r{cfg.encoder.lora.r}_R{cfg.phase1.rounds}"
-                f"_a{cfg.partition.alpha}_s{cfg.seed}{smoke}")
+                f"_a{cfg.partition.alpha}_s{cfg.seed}{f'_p{pseed}' if pseed else ''}{smoke}")
     if source == 'frozen':
         return f"frozen_{encoder_short(cfg)}{smoke}"
     if source == 'hash':
