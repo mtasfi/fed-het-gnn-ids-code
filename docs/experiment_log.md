@@ -306,6 +306,30 @@ The NetFlow-8 set (`features.set=netflow`, commit `46ee603`) is in/out bytes, in
 - On the application-layer classes, the extra features do the payload's job. With NetFlow features, the GNN without payload loses 6.2 L7 points, but with payload nodes it loses only 1.0–2.6.
 - **With NetFlow features the payload gain on L7 is much larger:** A1 → A2 goes from +6.2 to **+9.8**, and A1 → E1 from +0.8 to **+6.1**. So the thesis premise (flow-only data leave an application-layer gap that payloads fill) holds for NetFlow-level flow information. The 50 extractor features already close much of that gap.
 
+## 11l. Why NetFlow-8 works here but not on NF-ToN-IoT: NF-ToN-IoT label noise
+
+**Question (owner):** Fed_GNN's centralised XGBoost/RF on NF-ToN-IoT (Comet `fedgatsage-centralised`: macro-F1 0.50; XSS 0.30, password 0.38, scanning 0.13) failed on the L7 classes. Why do the same 8 NetFlow fields reach 0.87 on our flows?
+
+**1. Label-collision analysis on our flows** (`toniot-collision`, [script](experiment_log_outputs/nf_label_audit/collision_analysis.py)): NetFlow-8 vector, duration in ms, all 3.99 M labelled flows. The majority-label oracle recalls XSS 99.6 %, password 99.6 %, scanning 99.9 % and DoS 99.8 %. The preliminary study found 0.0 %, 0.0 %, 31.2 % and 2.4 % on NF-ToN-IoT. Only 1.3 % of our XSS flows and 2.4 % of our injection flows are tiny (< 1 s, ≤ 3 packets).
+
+**2. Matching NF-ToN-IoT v1 rows to our PCAP flows** (`nftoniot-payload-match`, [script](experiment_log_outputs/nf_label_audit/nftoniot_v1_match.py), [log](experiment_log_outputs/nf_label_audit/nftoniot_v1_match_log.txt)). Join on the same-direction 5-tuple, then fingerprint on exact in/out packets, bytes within 2 % and duration within 1 s.
+- 78.6 % of the 1.38 M NF rows have a 5-tuple partner, and **36.0 % match uniquely**. Most matches come from `injection_normal1/4.pcap`.
+- **NF label vs. ToN-IoT's own (Zeek) label on the same flow agrees only 58.5 %.** NF "xss" rows are 99.7 % Zeek-injection, NF "password" 94.9 % injection, NF "scanning" 68 % injection and 32 % DDoS, NF "ddos" 44 % injection, NF "Benign" 41 % DDoS.
+
+**3. Payload evidence** (matched flows with a readable payload):
+
+| NF label | SQLi signature | XSS signature | login form |
+|---|---|---|---|
+| injection | 52 % | 0 % | 23 % |
+| xss | 48 % | **0 %** | 29 % |
+| password | 48 % | 0 % | 40 % |
+| scanning | 50 % | 0 % | 29 % |
+| ddos | 48 % | 0 % | 49 % |
+
+Under Zeek labels, DDoS flows carry 0 % SQLi and injection flows 52 %: the Zeek labels agree with the payloads, and the NF labels do not.
+
+**Conclusion:** NF-ToN-IoT (v1) splits single SQL-injection sessions across the labels injection, xss, password, scanning and ddos, likely because it labels by attack-schedule time windows while several attacks ran from the same hosts at the same time. The "impossible" XSS and password classes of the preliminary study are therefore largely **label noise** in NF-ToN-IoT, not a limit of NetFlow fields or of flow-level models. This also explains why flow-only models are strong on the original ToN-IoT labels. Attaching payloads to NF-ToN-IoT v1 rows is technically possible (36 % unique matches), but it would teach payloads to wrong labels, so it is not pursued.
+
 ## 12. Thesis repo sync
 
 - PR #3 (new Dataset/Setup/Results chapters) was merged on GitHub. The E0 commit was rebased onto it (`d1e93f5`), and the E0 numbers were filled into `Tab_D_Stats` and "Outcome of the Data Audit". Still open: template overlap and probe timing.
