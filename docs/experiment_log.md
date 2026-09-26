@@ -158,6 +158,30 @@ Metrics from Comet: [`experiment_log_outputs/comet/test_metrics_E1_E5_PROBE.txt`
 - **Correction to §11:** with R2 = 20, E5 at α = 1.0 no longer loses injection (0.665 → 0.882), so under-training was a large part of that collapse. The lumpy injection block is real, but it did not cause the collapse on its own. E5 is still non-monotonic (0.924 / 0.858 / 0.882 for α = 0.3 / 0.5 / 1.0), so the partition-sensitivity runs (Runner B v5) are still needed to separate the α effect from the partition-draw effect.
 - The R2 = 10 runs are kept next to the new ones as `runs/<exp>/.../seed=0.completed-<timestamp>/`.
 
+## 11c. Ablation batch, seed 0, R2 = 20 (Runner A v3, 06:00–06:53)
+
+| Run | What changes vs. E1 | Macro-F1 | Worst client | Minutes |
+|---|---|---|---|---|
+| E1 seed 0 | – | 0.840 | 0.634 | 5.8 (Phase 2 only) |
+| B3 | centralised HetGNN (no federation) | 0.867 | 0.655 | 10.3 |
+| A3 | frozen encoder, no Phase-1 LoRA | **0.861** | **0.722** | 14.3 |
+| A4 | homogeneous graph | 0.859 | 0.685 | 3.1 |
+| A6 | no `next` edges | 0.854 | 0.673 | 2.9 |
+| A8 | no graph (fused-feature MLP) | 0.841 | 0.617 | 1.8 |
+| A5 | no `shares_host` | 0.830 | 0.618 | 2.0 |
+| A9 | payload only (Phase-1 head) | 0.688 | 0.569 | 3.6 |
+| E4 | missing-payload sweep (see run dir) | – | – | 1.2 |
+| E6 | efficiency (see run dir) | – | – | 2.9 |
+
+- On seed 0, several ablations (A3, A4, A6) score **above** E1, but E1's two seeds differ by 0.037. Single-seed differences of 1–2 points are within noise.
+- **A3 > E1** on seed 0 means the federated LoRA adaptation (Phase 1) does not beat the frozen pretrained encoder here. If this holds over seeds, it is an honest negative result for Phase 1.
+- A9 (payload only, 0.688) confirms that payload alone is far from enough: flow statistics carry most classes.
+- B3 − E1 ≈ 2.7 points is the cost of federation on seed 0.
+
+**Decision:** single-seed ablations cannot support these claims, and Phase-2 ablations are cheap. So **seed 1 of every ablation** (A1–A6, A8, A9, B1, B3, E4) runs, paired with E1 seed 1 (Runner A v4). Ablations will then be reported as 2-seed means next to E1's 2-seed mean.
+
+**Bug found and fixed:** runner A pulled the shared state at 06:00 and pushed every local run dir after each experiment. This overwrote runner B's newer R2 = 20 results for A1/A2/B1/E5 in `fhf-state` with stale R2 = 10 copies. Runner B's next pushes restored them, and runners now push only the run dirs written in their own session (commit `6090aac`).
+
 ## 12. Thesis repo sync
 
 - PR #3 (new Dataset/Setup/Results chapters) was merged on GitHub. The E0 commit was rebased onto it (`d1e93f5`), and the E0 numbers were filled into `Tab_D_Stats` and "Outcome of the Data Audit". Still open: template overlap and probe timing.
@@ -168,7 +192,6 @@ Metrics from Comet: [`experiment_log_outputs/comet/test_metrics_E1_E5_PROBE.txt`
 
 | Runner | Queue |
 |---|---|
-| A (v3, running) | E1 (Phase 2, R2 = 20) → E4 → A5 → B3 → A3 → E6 → A4 → A8 → A9 → A6 |
-| B (v4, running) | B1 → A1 → A2 → E5 (Phase 2, R2 = 20) |
-| B (next) | partition sensitivity: A2, B1 × α {0.3, 0.5, 1.0, IID} × partition seed {0, 1, 2} |
+| A (v4, running) | seed 1 of A1, A2, A4, A5, A6, A8, A9, B1, B3, A3, E4 |
+| B (v5, running) | partition sensitivity: A2, B1 × α {0.3, 0.5, 1.0, IID} × partition seed {0, 1, 2} |
 | last | (A7) → AGG → thesis Results |
