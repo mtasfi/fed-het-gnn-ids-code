@@ -258,6 +258,22 @@ Means over 2 seeds, R2 = 20, α = 0.5, p0. L7-F1 is the mean F1 over injection, 
 
 All latest per-run test metrics from Comet: [`comet/latest_test_metrics_all_runs.csv`](experiment_log_outputs/comet/latest_test_metrics_all_runs.csv) (script: [`comet_latest.py`](experiment_log_outputs/comet_latest.py)).
 
+## 11h. E1 on three partition draws (α = 0.5, training seed 0)
+
+Runner B v6 ran p1 (112 min) and runner A v5 ran p2 (104 min). Phase 1 took 18–22 min per round.
+
+| Partition | E1 | A2 hashed | B1 FedAvg MLP | E1 − A2 | E1 − B1 |
+|---|---|---|---|---|---|
+| p0 (main) | 0.840 | 0.842 | 0.810 | −0.2 | +3.0 |
+| p1 | **0.881** | 0.842 | 0.694 | +3.9 | +18.7 |
+| p2 | 0.615 | 0.611 | 0.621 | +0.4 | −0.6 |
+| **mean** | **0.779** | 0.765 | 0.708 | **+1.4** | **+7.0** |
+
+- **E1 beats the flow-only federated floor (B1) by 7.0 points on average**: clearly on p0 and p1, a tie on p2. This is the thesis's most robust headline claim.
+- E1 vs. hashed payload (A2): +1.4 on average, driven by one draw (+3.9 on p1). The transformer adds a small, draw-dependent gain.
+- p2 is a hard draw for every federated model (≈ 0.61–0.62). The partition draw matters as much as the model.
+- Comet: E1 p1 and p2 are under `E1/toniot/psens_p1|psens_p2/...`.
+
 ## 12. Thesis repo sync
 
 - PR #3 (new Dataset/Setup/Results chapters) was merged on GitHub. The E0 commit was rebased onto it (`d1e93f5`), and the E0 numbers were filled into `Tab_D_Stats` and "Outcome of the Data Audit". Still open: template overlap and probe timing.
@@ -269,6 +285,5 @@ All latest per-run test metrics from Comet: [`comet/latest_test_metrics_all_runs
 | Runner | Queue |
 |---|---|
 | A (v4, running) | seed 1 of A1, A2, A4, A5, A6, A8, A9, B1, B3, A3, E4 |
-| B (v6, running) | E1 on α = 0.5, partition draw p1 |
-| A (next) | E1 on α = 0.5, partition draw p2 |
+| A (v6, running) | AGG |
 | last | (A7) → AGG → thesis Results |
